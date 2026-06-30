@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Koreksi Murojaah AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans antialiased">
+
+    <header class="bg-emerald-600 text-white shadow-md py-6 px-4 mb-8 text-center">
+        <h1 class="text-2xl md:text-3xl font-bold">🕌 Asisten Murojaah AI</h1>
+        <p class="text-sm mt-2 opacity-90">Upload setoran hafalanmu, tinggal ngopi, dan biarkan AI mengoreksi otomatis.</p>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-4">
+        
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-8">
+            <h2 class="text-lg font-semibold text-gray-700 mb-4">🎵 Upload Rekaman Baru (Rekomendasi: 15-20 Menit)</h2>
+            
+            <form id="uploadForm" class="space-y-4">
+                <div class="border-2 border-dashed border-emerald-300 rounded-xl p-6 text-center hover:bg-emerald-50/50 transition cursor-pointer relative">
+                    <input type="file" id="audioFile" accept="audio/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" required>
+                    <div id="uploadPrompt" class="space-y-2">
+                        <span class="text-4xl">🎤</span>
+                        <p class="text-sm text-gray-600 font-medium">Klik atau seret file audio rekamanmu ke sini</p>
+                        <p class="text-xs text-gray-400">Format: MP3, M4A, WAV, dll.</p>
+                    </div>
+                    <div id="fileSelectedName" class="hidden text-sm text-emerald-600 font-semibold truncate"></div>
+                </div>
+
+                <button type="submit" id="submitBtn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-4 rounded-xl shadow-sm hover:shadow transition flex justify-center items-center gap-2">
+                    🚀 Kirim Ke AI Guru Ngaji
+                </button>
+            </form>
+
+            <div id="statusBox" class="hidden mt-4 p-4 rounded-xl text-sm font-medium border"></div>
+        </div>
+
+    </main>
+
+    <script>
+        const BACKEND_URL = "https://fuqohak88-murojaah-backend.hf.space/upload";
+        const fileInput = document.getElementById('audioFile');
+        const uploadForm = document.getElementById('uploadForm');
+        const uploadPrompt = document.getElementById('uploadPrompt');
+        const fileSelectedName = document.getElementById('fileSelectedName');
+        const submitBtn = document.getElementById('submitBtn');
+        const statusBox = document.getElementById('statusBox');
+
+        // Deteksi jika file sudah dipilih
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length > 0) {
+                uploadPrompt.classList.add('hidden');
+                fileSelectedName.textContent = `📄 ${fileInput.files[0].name}`;
+                fileSelectedName.classList.remove('hidden');
+            }
+        });
+
+        // Proses Submit Form (Upload ke Hugging Face)
+        uploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            // Ubah tombol jadi mode loading
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `⏳ Sedang Mengirim File ke Awan...`;
+            statusBox.className = "mt-4 p-4 rounded-xl text-sm font-medium border bg-blue-50 border-blue-200 text-blue-700";
+            statusBox.innerHTML = "Jangan tutup halaman ini dulu. File audio sedang ditransfer dari HP-mu ke server backend AI...";
+            statusBox.classList.remove('hidden');
+
+            try {
+                const response = await fetch(BACKEND_URL, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.status === "success") {
+                    statusBox.className = "mt-4 p-4 rounded-xl text-sm font-medium border bg-green-50 border-green-200 text-green-700";
+                    statusBox.innerHTML = `🎉 <strong>Berhasil!</strong> ${data.message}`;
+                    uploadForm.reset();
+                    uploadPrompt.classList.remove('hidden');
+                    fileSelectedName.classList.add('hidden');
+                } else {
+                    throw new Error(data.message || "Gagal memproses file di server.");
+                }
+
+            } catch (error) {
+                statusBox.className = "mt-4 p-4 rounded-xl text-sm font-medium border bg-red-50 border-red-200 text-red-700";
+                statusBox.innerHTML = `❌ <strong>Terjadi Kesalahan:</strong> ${error.message}. Coba pastikan backend Hugging Face dalam kondisi 'Running'.`;
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = `🚀 Kirim Ke AI Guru Ngaji`;
+            }
+        });
+    </script>
+</body>
+</html>
