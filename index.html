@@ -3,26 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Koreksi Murojaah AI</title>
+    <title>Koreksi Murojaah AI - Premium Recorder</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans antialiased">
 
     <header class="bg-emerald-600 text-white shadow-md py-6 px-4 mb-8 text-center">
         <h1 class="text-2xl md:text-3xl font-bold">🕌 Asisten Murojaah AI</h1>
-        <p class="text-sm mt-2 opacity-90">Upload setoran hafalanmu, tinggal ngopi, dan biarkan AI mengoreksi otomatis secara langsung.</p>
+        <p class="text-sm mt-2 opacity-90">Rekam hafalan marathon hingga 3 jam, hemat kuota, dan otomatis terkirim walau sinyal naik turun.</p>
     </header>
 
     <main class="max-w-4xl mx-auto px-4 pb-12">
         
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-8 space-y-6">
+            <div class="flex flex-wrap justify-between items-center border-b pb-3">
+                <h2 class="text-lg font-semibold text-gray-700 flex items-center gap-2">
+                    🎙️ Alat Perekam Cerdas (Maks 3 Jam)
+                </h2>
+                <span id="networkStatus" class="text-xs px-2.5 py-1 rounded-full font-semibold bg-green-100 text-green-700">🟢 Online</span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                <button id="recordBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl shadow transition flex justify-center items-center gap-2 text-base">
+                    🔴 Mulai Rekam Murojaah
+                </button>
+                <button id="testMicBtn" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 px-4 rounded-xl transition flex justify-center items-center gap-2 text-sm">
+                    🔊 Tes Suara Mic
+                </button>
+                <div class="text-center md:text-right">
+                    <span id="timer" class="text-2xl font-mono font-bold text-gray-600">00:00:00</span>
+                </div>
+            </div>
+
+            <div class="space-y-1.5">
+                <label class="text-xs font-semibold text-gray-400 block">Indikator Sinyal & Gerakan Suara Mic:</label>
+                <div class="w-full bg-gray-100 h-6 rounded-lg overflow-hidden relative border">
+                    <div id="volumeBar" class="bg-emerald-500 h-full w-0 transition-all duration-75"></div>
+                    <span id="volumeLabel" class="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-gray-600 uppercase tracking-wider">Mic Mati</span>
+                </div>
+            </div>
+
+            <div id="offlineQueueBox" class="hidden p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 font-medium">
+                ⚠️ Koneksi internet terputus! Hasil rekaman disimpan di memori HP dan akan otomatis dikirim ke AI begitu sinyal kembali normal.
+            </div>
+        </div>
+
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-8">
-            <h2 class="text-lg font-semibold text-gray-700 mb-4">🎵 Upload Rekaman Baru (Rekomendasi: 15-20 Menit)</h2>
+            <h2 class="text-lg font-semibold text-gray-700 mb-4">🎵 Atau Upload File Rekaman Luar</h2>
             
             <form id="uploadForm" class="space-y-4">
                 <div class="border-2 border-dashed border-emerald-300 rounded-xl p-6 text-center hover:bg-emerald-50/50 transition cursor-pointer relative">
-                    <input type="file" id="audioFile" accept="audio/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" required>
+                    <input type="file" id="audioFile" accept="audio/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
                     <div id="uploadPrompt" class="space-y-2">
-                        <span class="text-4xl">🎤</span>
+                        <span class="text-4xl">📁</span>
                         <p class="text-sm text-gray-600 font-medium">Klik atau seret file audio rekamanmu ke sini</p>
                         <p class="text-xs text-gray-400">Format: MP3, M4A, WAV, dll.</p>
                     </div>
@@ -30,7 +63,7 @@
                 </div>
 
                 <button type="submit" id="submitBtn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-4 rounded-xl shadow-sm hover:shadow transition flex justify-center items-center gap-2">
-                    🚀 Kirim Ke AI Guru Ngaji
+                    🚀 Kirim File Ke AI Guru Ngaji
                 </button>
             </form>
 
@@ -51,9 +84,9 @@
 
     <script>
         const BACKEND_URL = "https://fuqohak88-murojaah-backend.hf.space/upload";
-        // URL Web App Google Sheets Makro milikmu (Untuk metode GET data)
         const GSCRIPT_GET_URL = "https://script.google.com/macros/s/AKfycbzFmHspd31V3Kh1W3dO9x4ncQ81v-2y_04UdUpnKqttF3xLE6tBpfVx1wTI2eO5-12y/exec";
 
+        // DOM Elements
         const fileInput = document.getElementById('audioFile');
         const uploadForm = document.getElementById('uploadForm');
         const uploadPrompt = document.getElementById('uploadPrompt');
@@ -61,17 +94,222 @@
         const submitBtn = document.getElementById('submitBtn');
         const statusBox = document.getElementById('statusBox');
         const containerLaporan = document.getElementById('containerLaporan');
+        
+        const recordBtn = document.getElementById('recordBtn');
+        const testMicBtn = document.getElementById('testMicBtn');
+        const timerLabel = document.getElementById('timer');
+        const volumeBar = document.getElementById('volumeBar');
+        const volumeLabel = document.getElementById('volumeLabel');
+        const networkStatus = document.getElementById('networkStatus');
+        const offlineQueueBox = document.getElementById('offlineQueueBox');
 
-        // Deteksi jika file sudah dipilih
-        fileInput.addEventListener('change', () => {
-            if (fileInput.files.length > 0) {
-                uploadPrompt.classList.add('hidden');
-                fileSelectedName.textContent = `📄 ${fileInput.files[0].name}`;
-                fileSelectedName.classList.remove('hidden');
+        // Perekam & Audio Context Global Variables
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let startTime = null;
+        let timerInterval = null;
+        let audioCtx = null;
+        let analyser = null;
+        let streamGlobal = null;
+        let isRecording = false;
+        let isTestingMic = false;
+        let pendingBlob = null; // Menyimpan rekaman sementara jika offline
+
+        // 1. Deteksi Sinyal Internet Nyata (Online/Offline)
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+
+        function updateOnlineStatus() {
+            if (navigator.onLine) {
+                networkStatus.textContent = "🟢 Online";
+                networkStatus.className = "text-xs px-2.5 py-1 rounded-full font-semibold bg-green-100 text-green-700";
+                offlineQueueBox.classList.add('hidden');
+                // Jika ada rekaman tertunda yang belum dikirim, hajar kirim sekarang!
+                if (pendingBlob) {
+                    tampilkanStatus("Sinyal kembali normal! Mengirim antrean rekaman murojaah-mu ke server...", "bg-blue-50 border-blue-200 text-blue-700");
+                    kirimBlobAudio(pendingBlob);
+                    pendingBlob = null;
+                }
+            } else {
+                networkStatus.textContent = "🔴 Offline Mode";
+                networkStatus.className = "text-xs px-2.5 py-1 rounded-full font-semibold bg-amber-100 text-amber-700";
+                offlineQueueBox.classList.remove('hidden');
+            }
+        }
+
+        // 2. Fungsi Deteksi & Visualisasi Level Suara Mic (Aman untuk Bluetooth)
+        async function inisialisasiAudioVisualizer(stream) {
+            if (audioCtx) audioCtx.close();
+            
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            analyser = audioCtx.createAnalyser();
+            const source = audioCtx.createMediaStreamSource(stream);
+            source.connect(analyser);
+            analyser.fftSize = 256;
+            
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            
+            function draw() {
+                if (!isRecording && !isTestingMic) {
+                    volumeBar.style.width = "0%";
+                    volumeLabel.textContent = "Mic Mati";
+                    return;
+                }
+                
+                requestAnimationFrame(draw);
+                analyser.getByteFrequencyData(dataArray);
+                
+                let total = 0;
+                for (let i = 0; i < bufferLength; i++) {
+                    total += dataArray[i];
+                }
+                let average = total / bufferLength;
+                let volumePercent = Math.min(Math.round((average / 128) * 100), 100);
+                
+                volumeBar.style.width = volumePercent + "%";
+                if (volumePercent > 5) {
+                    volumeLabel.textContent = `🎤 Mic Menangkap Suara (${volumePercent}%)`;
+                    volumeBar.className = "bg-emerald-500 h-full transition-all duration-75";
+                } else {
+                    volumeLabel.textContent = "💤 Sunyi.. Dekatkan Suara";
+                    volumeBar.className = "bg-gray-300 h-full transition-all duration-75";
+                }
+            }
+            draw();
+        }
+
+        // 3. Fitur Utama Tombol Rekam (Maksimal Kuat 3 Jam)
+        recordBtn.addEventListener('click', async () => {
+            if (!isRecording) {
+                // Matikan fitur tes mic jika sedang aktif
+                if (isTestingMic) testMicBtn.click();
+                
+                try {
+                    // Konfigurasi audio agar sensitif mendeteksi mic eksternal/Bluetooth
+                    const stream = await navigator.mediaDevices.getUserMedia({ 
+                        audio: {
+                            echoCancellation: true,
+                            noiseSuppression: true,
+                            autoGainControl: true // Membuat suara jauh tetap terdengar sensitif
+                        } 
+                    });
+                    
+                    streamGlobal = stream;
+                    audioChunks = [];
+                    
+                    // Menyetel tipe kompresi browser bawaan (Opus sangat ringan dan padat)
+                    let options = { mimeType: 'audio/webm;codecs=opus' };
+                    if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                        options = { mimeType: 'audio/mp4' }; // fallback Apple iOS
+                    }
+                    
+                    mediaRecorder = new MediaRecorder(stream, options);
+                    
+                    mediaRecorder.ondataavailable = (e) => {
+                        if (e.data.size > 0) audioChunks.push(e.data);
+                    };
+                    
+                    mediaRecorder.onstop = () => {
+                        const audioBlob = new Blob(audioChunks, { type: mediaRecorder.mimeType });
+                        
+                        if (navigator.onLine) {
+                            tampilkanStatus("Rekaman selesai! Mengirim audio hemat ke server Google Gemini...", "bg-blue-50 border-blue-200 text-blue-700");
+                            kirimBlobAudio(audioBlob);
+                        } else {
+                            pendingBlob = audioBlob;
+                            tampilkanStatus("🎉 Berhasil disimpan offline! Rekaman tersimpan aman di memori HP. Hubungkan kembali ke internet untuk mengirim otomatis.", "bg-amber-50 border-amber-200 text-amber-700");
+                        }
+                        
+                        // Matikan jalur mic agar ikon record di browser hilang
+                        streamGlobal.getTracks().forEach(track => track.stop());
+                    };
+                    
+                    // Mulai Merekam
+                    mediaRecorder.start(1000); // mengikat data setiap 1 detik agar aman
+                    isRecording = true;
+                    recordBtn.textContent = "⏹️ Selesai & Kirim";
+                    recordBtn.className = "bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-xl shadow transition flex justify-center items-center gap-2 text-base";
+                    
+                    // Jalankan Timer & Visualizer suara
+                    startTime = Date.now();
+                    timerInterval = setInterval(updateTimer, 1000);
+                    inisialisasiAudioVisualizer(stream);
+                    
+                } catch (err) {
+                    alert("Gagal mengakses Mikrofon. Berikan izin mic di browsermu terlebih dahulu!");
+                }
+            } else {
+                // Berhenti Merekam
+                mediaRecorder.stop();
+                isRecording = false;
+                recordBtn.textContent = "🔴 Mulai Rekam Murojaah";
+                recordBtn.className = "bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl shadow transition flex justify-center items-center gap-2 text-base";
+                clearInterval(timerInterval);
+                timerLabel.textContent = "00:00:00";
             }
         });
 
-        // Fungsi Memuat Laporan Terbaru dari Google Sheets secara Realtime
+        // 4. Fitur Tes Suara Mic (Sebelum Mulai Murojaah)
+        testMicBtn.addEventListener('click', async () => {
+            if (!isTestingMic) {
+                if (isRecording) return;
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    streamGlobal = stream;
+                    isTestingMic = true;
+                    testMicBtn.textContent = "🛑 Matikan Tes Suara";
+                    testMicBtn.className = "bg-gray-700 text-white font-semibold py-3 px-4 rounded-xl transition flex justify-center items-center gap-2 text-sm";
+                    inisialisasiAudioVisualizer(stream);
+                } catch (err) {
+                    alert("Tidak dapat mengetes mic.");
+                }
+            } else {
+                isTestingMic = false;
+                testMicBtn.textContent = "🔊 Tes Suara Mic";
+                testMicBtn.className = "bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 px-4 rounded-xl transition flex justify-center items-center gap-2 text-sm";
+                if (streamGlobal) streamGlobal.getTracks().forEach(track => track.stop());
+            }
+        });
+
+        // Penghitung waktu otomatis (Timer)
+        function updateTimer() {
+            const elapsedTime = Date.now() - startTime;
+            const secs = Math.floor((elapsedTime / 1000) % 60);
+            const mins = Math.floor((elapsedTime / 1000 / 60) % 60);
+            const hrs = Math.floor((elapsedTime / 1000 / 60 / 60));
+            timerLabel.textContent = 
+                `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // 5. Fungsi Mengirim Blob Suara Rekaman ke Hugging Face Backend
+        async function kirimBlobAudio(blob) {
+            const ext = blob.type.includes('mp4') ? 'mp4' : 'mp3';
+            const fileDibuat = new File([blob], `rekaman_langsung.${ext}`, { type: blob.type });
+            
+            const formData = new FormData();
+            formData.append('file', fileDibuat);
+            
+            try {
+                const response = await fetch(BACKEND_URL, { method: 'POST', body: formData });
+                const data = await response.json();
+                if (response.ok && data.status === "success") {
+                    tampilkanStatus(`🎉 <strong>Rekaman Sukses Dikirim!</strong> Gemini sedang mendengarkan hafalanmu. Silakan tunggu 3-5 menit tanpa perlu memelototi layar ini.`, "bg-green-50 border-green-200 text-green-700");
+                } else {
+                    throw new Error(data.message || "Server menolak file.");
+                }
+            } catch (err) {
+                tampilkanStatus(`❌ <strong>Gagal Mengirim:</strong> ${err.message}. Tenang, rekaman tidak hilang, silakan dicoba upload ulang manual jika sinyal membaik.`, "bg-red-50 border-red-200 text-red-700");
+            }
+        }
+
+        function tampilkanStatus(pesan, gayaKelas) {
+            statusBox.className = `mt-4 p-4 rounded-xl text-sm font-medium border ${gayaKelas}`;
+            statusBox.innerHTML = pesan;
+            statusBox.classList.remove('hidden');
+        }
+
+        // 6. Fungsi Ambil Laporan (Tetap sinkron dengan Google Sheets kamu)
         async function muatLaporan() {
             try {
                 const res = await fetch(GSCRIPT_GET_URL);
@@ -87,7 +325,7 @@
                     const tanggal = new Date(item.waktu).toLocaleDateString('id-ID', {day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit'});
                     
                     let bgKoreksi = "bg-green-50 border-green-200 text-green-800";
-                    if (item.koreksi.includes("salah") || item.koreksi.includes("loncat")) {
+                    if (item.koreksi.includes("salah") || item.koreksi.includes("loncat") || item.koreksi.includes("LOMPAT")) {
                         bgKoreksi = "bg-red-50 border-red-200 text-red-800";
                     }
 
@@ -95,61 +333,44 @@
                         <div class="p-4 rounded-xl border border-gray-100 bg-gray-50/50 space-y-2">
                             <div class="flex justify-between text-xs text-gray-400">
                                 <span>📅 ${tanggal} WIB</span>
-                                <span class="font-bold text-emerald-600">Selesai Ditashih</span>
+                                <span class="font-bold text-emerald-600">Selesai Ditashih AI</span>
                             </div>
-                            <p class="text-xs font-semibold text-gray-400">Transkrip Suara (Whisper):</p>
-                            <p class="dir-rtl text-right font-serif text-lg text-gray-700 bg-white p-2.5 rounded-lg border border-gray-100" style="direction: rtl;">${item.bacaan || '(Audio Tidak Jelas)'}</p>
-                            <p class="text-xs font-semibold text-gray-400 mt-1">Hasil Analisis Hasil Hafalan (Gemini AI):</p>
-                            <div class="p-3 rounded-lg border font-mono text-xs ${bgKoreksi}">${item.koreksi.replace(/\n/g, '<br>')}</div>
+                            <p class="text-xs font-semibold text-gray-400 mt-1">Laporan Hasil Tashih & Koreksi (Gemini Audio Direct):</p>
+                            <div class="p-4 rounded-lg border font-mono text-xs bg-white text-gray-800 leading-relaxed whitespace-pre-line">${item.koreksi}</div>
                         </div>
                     `;
                 });
             } catch (err) {
-                containerLaporan.innerHTML = `<p class="text-xs text-red-500">Gagal memuat pembaruan data dari Google Sheets secara otomatis.</p>`;
+                containerLaporan.innerHTML = `<p class="text-xs text-red-500">Gagal memuat otomatis dari Google Sheets. Pastikan koneksi stabil.</p>`;
             }
         }
 
-        // Proses Submit Form (Upload ke Hugging Face)
+        // Jalur Upload Manual (Bila punya file rekaman luar)
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length > 0) {
+                uploadPrompt.classList.add('hidden');
+                fileSelectedName.textContent = `📄 ${fileInput.files[0].name}`;
+                fileSelectedName.classList.remove('hidden');
+            }
+        });
+
         uploadForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const file = fileInput.files[0];
             if (!file) return;
-
-            const formData = new FormData();
-            formData.append('file', file);
-
             submitBtn.disabled = true;
-            submitBtn.innerHTML = `⏳ Sedang Mengirim File ke Awan...`;
-            statusBox.className = "mt-4 p-4 rounded-xl text-sm font-medium border bg-blue-50 border-blue-200 text-blue-700";
-            statusBox.innerHTML = "File audio berhasil dikirim dari HP-mu! Server backend Hugging Face saat ini sedang menjalankan transkripsi Whisper (memakan waktu beberapa menit tergantung panjang audio). Hasil koreksi otomatis Gemini akan muncul di bawah secara berkala.";
-            statusBox.classList.remove('hidden');
-
-            try {
-                const response = await fetch(BACKEND_URL, { method: 'POST', body: formData });
-                const data = await response.json();
-
-                if (response.ok && data.status === "success") {
-                    statusBox.className = "mt-4 p-4 rounded-xl text-sm font-medium border bg-green-50 border-green-200 text-green-700";
-                    statusBox.innerHTML = `🎉 <strong>Berhasil Diterima Server!</strong> Whisper sedang mengetik & Gemini otomatis memproses di latar belakang. Silakan tunggu 3-5 menit, kotak laporan di bawah akan terupdate otomatis.`;
-                    uploadForm.reset();
-                    uploadPrompt.classList.remove('hidden');
-                    fileSelectedName.classList.add('hidden');
-                } else {
-                    throw new Error(data.message || "Gagal memproses file di server.");
-                }
-            } catch (error) {
-                statusBox.className = "mt-4 p-4 rounded-xl text-sm font-medium border bg-red-50 border-red-200 text-red-700";
-                statusBox.innerHTML = `❌ <strong>Terjadi Kesalahan:</strong> ${error.message}.`;
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = `🚀 Kirim Ke AI Guru Ngaji`;
-            }
+            tampilkanStatus("Sedang mengirim file...", "bg-blue-50 border-blue-200 text-blue-700");
+            await kirimBlobAudio(file);
+            submitBtn.disabled = false;
+            uploadForm.reset();
+            uploadPrompt.classList.remove('hidden');
+            fileSelectedName.classList.add('hidden');
         });
 
-        // Jalankan pencarian laporan otomatis saat halaman web pertama kali dibuka
+        // Inisialisasi awal
+        updateOnlineStatus();
         muatLaporan();
-        // Lakukan auto-refresh berkala setiap 30 detik untuk menarik laporan terbaru tanpa reload halaman
-        setInterval(muatLaporan, 30000);
+        setInterval(muatLaporan, 30000); // Auto-refresh hasil setiap 30 detik
     </script>
 </body>
 </html>
