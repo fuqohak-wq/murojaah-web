@@ -389,7 +389,7 @@
             statusBox.classList.remove('hidden');
         }
 
-        // Ambil Laporan & Tampilkan Tombol Hapus (SUDAH DIPERBAIKI SINTAKSISNYA)
+        // Ambil Laporan & Tampilkan Tombol Hapus (SUDAH DIPERBAIKI)
         async function muatLaporan() {
             try {
                 containerLaporan.innerHTML = `<p class="text-center py-4 text-gray-400">Sedang menyegarkan data...</p>`;
@@ -434,24 +434,28 @@
             }
         }
 
-        // Fungsi Mengirim Perintah Hapus ke Google Sheets
-        function hapusBaris(index) {
-    if (confirm("Apakah Anda yakin ingin menghapus riwayat ini?")) {
-        // Panggil URL Web App Anda menggunakan GET dengan parameter URL
-        fetch(`${WEB_APP_URL}?aksi=hapus&baris_ke=${index}`, {
-            method: 'GET' // Diubah dari POST menjadi GET agar bypass CORS
-        })
-        .then(response => response.json())
-        .then(data => {
-            alert("Data berhasil dihapus!");
-            muatRiwayat(); // Refresh tabel riwayat otomatis setelah hapus
-        })
-        .catch(error => {
-            console.error("Error:", error);
-            alert("Gagal menghapus data.");
-        });
-    }
-}
+        // Fungsi Baru Mengirim Perintah Hapus ke Google Sheets (SUDAH DISINKRONKAN DENGAN KODE ATAS)
+        async function hapusBaris(index) {
+            if (confirm("Apakah Anda yakin ingin menghapus baris riwayat ini?")) {
+                try {
+                    tampilkanStatus("Sedang menghapus baris data di Google Sheets...", "bg-amber-50 border-amber-200 text-amber-700");
+                    
+                    // Menggunakan GSCRIPT_GET_URL karena nilainya sama dengan tautan Web App Anda
+                    const response = await fetch(`${GSCRIPT_GET_URL}?aksi=hapus&baris_ke=${index}`, {
+                        method: 'GET' // Menggunakan GET murni agar lolos sensor CORS browser sesuai kode baru code.gs Anda
+                    });
+
+                    setTimeout(() => {
+                        tampilkanStatus("🗑️ Baris berhasil dihapus dari sistem!", "bg-green-50 border-green-200 text-green-700");
+                        muatLaporan(); // Diperbaiki dari muatRiwayat() ke muatLaporan()
+                    }, 2000);
+
+                } catch (err) {
+                    alert("Gagal menghapus data: " + err.message);
+                }
+            }
+        }
+
         fileInput.addEventListener('change', () => {
             if (fileInput.files.length > 0) {
                 uploadPrompt.classList.add('hidden');
