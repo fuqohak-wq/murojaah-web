@@ -435,33 +435,23 @@
         }
 
         // Fungsi Mengirim Perintah Hapus ke Google Sheets
-        async function hapusBaris(index) {
-            const konfirmasi = confirm("Apakah Anda yakin ingin menghapus riwayat murojaah ini dari Google Sheets?");
-            if (!konfirmasi) return;
-
-            try {
-                tampilkanStatus("Sedang menghapus baris data di Google Sheets...", "bg-amber-50 border-amber-200 text-amber-700");
-                
-                const response = await fetch(GSCRIPT_GET_URL, {
-                    method: 'POST',
-                    mode: 'no-cors', 
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        "aksi": "hapus",
-                        "baris_ke": index
-                    })
-                });
-
-                setTimeout(() => {
-                    tampilkanStatus("🗑️ Baris berhasil dihapus dari sistem!", "bg-green-50 border-green-200 text-green-700");
-                    muatLaporan(); 
-                }, 2000);
-
-            } catch (err) {
-                alert("Gagal menghapus data: " + err.message);
-            }
-        }
-
+        function hapusBaris(index) {
+    if (confirm("Apakah Anda yakin ingin menghapus riwayat ini?")) {
+        // Panggil URL Web App Anda menggunakan GET dengan parameter URL
+        fetch(`${WEB_APP_URL}?aksi=hapus&baris_ke=${index}`, {
+            method: 'GET' // Diubah dari POST menjadi GET agar bypass CORS
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert("Data berhasil dihapus!");
+            muatRiwayat(); // Refresh tabel riwayat otomatis setelah hapus
+        })
+        .catch(error => {
+            console.error("Error:", error);
+            alert("Gagal menghapus data.");
+        });
+    }
+}
         fileInput.addEventListener('change', () => {
             if (fileInput.files.length > 0) {
                 uploadPrompt.classList.add('hidden');
