@@ -23,7 +23,6 @@
                 <span id="networkStatus" class="text-xs px-2.5 py-1 rounded-full font-semibold bg-green-100 text-green-700">🟢 Online</span>
             </div>
 
-            <!-- Tambahan: Input Target Surah untuk Meningkatkan Akurasi AI -->
             <div class="space-y-1.5">
                 <label class="text-xs font-semibold text-gray-500 block">🎯 Target Surah yang Dibaca Hari Ini (Opsional - Sangat Membantu Akurasi AI):</label>
                 <input type="text" id="surahHint" placeholder="Contoh: Sebagian An-Nisa & Al-Ma'idah sampai khatam" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-gray-50/50">
@@ -140,7 +139,7 @@
         let mediaRecorder = null;
         let audioChunks = [];
         let startTime = null;
-        let totalElapsedTime = 0; // Menyimpan durasi akumulasi sebelum dijeda
+        let totalElapsedTime = 0; 
         let timerInterval = null;
         let audioCtx = null;
         let analyser = null;
@@ -192,7 +191,6 @@
                 }
                 requestAnimationFrame(draw);
 
-                // Jika rekaman sedang dijeda, kosongkan visualizer tanpa mematikan loop utama
                 if (isPaused) {
                     volumeBar.style.width = "0%";
                     volumeLabel.textContent = "⏸️ Rekaman Dijeda";
@@ -267,7 +265,6 @@
                     recordBtn.textContent = "⏹️ Selesai & Kirim";
                     recordBtn.className = "bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-xl shadow transition flex justify-center items-center gap-2 text-base w-full";
                     
-                    // Tampilkan Tombol Pause
                     pauseBtn.textContent = "⏸️ Jeda Rekaman";
                     pauseBtn.className = "bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 px-4 rounded-xl shadow transition flex justify-center items-center gap-2 text-base w-full";
                     pauseBtn.classList.remove('hidden');
@@ -286,9 +283,7 @@
                 recordBtn.textContent = "🔴 Mulai Rekam Murojaah";
                 recordBtn.className = "bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl shadow transition flex justify-center items-center gap-2 text-base w-full";
                 
-                // Sembunyikan Tombol Pause
                 pauseBtn.classList.add('hidden');
-
                 clearInterval(timerInterval);
                 timerLabel.textContent = "00:00:00";
                 totalElapsedTime = 0;
@@ -302,21 +297,21 @@
             if (mediaRecorder.state === 'recording') {
                 mediaRecorder.pause();
                 isPaused = true;
-                totalElapsedTime += Date.now() - startTime; // Kunci durasi yang telah lewat
+                totalElapsedTime += Date.now() - startTime; 
                 
                 pauseBtn.textContent = "▶️ Lanjutkan";
                 pauseBtn.className = "bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl shadow transition flex justify-center items-center gap-2 text-base w-full";
             } else if (mediaRecorder.state === 'paused') {
                 mediaRecorder.resume();
                 isPaused = false;
-                startTime = Date.now(); // Setel waktu mulai baru pasca jeda
+                startTime = Date.now(); 
                 
                 pauseBtn.textContent = "⏸️ Jeda Rekaman";
                 pauseBtn.className = "bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 px-4 rounded-xl shadow transition flex justify-center items-center gap-2 text-base w-full";
             }
         });
 
-        // 4. Fitur Kirim Ulang Rekaman Terakhir (Tombol Sakti Cadangan)
+        // 4. Fitur Kirim Ulang Rekaman Terakhir
         resendBtn.addEventListener('click', async () => {
             if (!lastRecordedBlob) {
                 alert("Belum ada rekaman yang tersimpan di halaman ini.");
@@ -355,7 +350,7 @@
         });
 
         function updateTimer() {
-            if (isPaused) return; // Jangan tambahkan waktu visual jika sedang dijeda
+            if (isPaused) return; 
             
             const elapsedTime = totalElapsedTime + (Date.now() - startTime);
             const secs = Math.floor((elapsedTime / 1000) % 60);
@@ -371,7 +366,6 @@
             const formData = new FormData();
             formData.append('file', fileDibuat);
             
-            // Masukkan hint target surah ke dalam formData jika diisi oleh user
             if (surahHintInput && surahHintInput.value.trim() !== "") {
                 formData.append('surah_hint', surahHintInput.value.trim());
             }
@@ -395,7 +389,7 @@
             statusBox.classList.remove('hidden');
         }
 
-        // Ambil Laporan & Tampilkan Tombol Hapus (GANTI FUNGSI LAMA DENGAN INI)
+        // Ambil Laporan & Tampilkan Tombol Hapus (SUDAH DIPERBAIKI SINTAKSISNYA)
         async function muatLaporan() {
             try {
                 containerLaporan.innerHTML = `<p class="text-center py-4 text-gray-400">Sedang menyegarkan data...</p>`;
@@ -409,7 +403,6 @@
                 
                 containerLaporan.innerHTML = "";
                 
-                // Urutan data dari doGet: indeks 0 adalah baris ke-2 di Excel (terbaru)
                 data.forEach((item, index) => {
                     const tanggal = new Date(item.waktu).toLocaleDateString('id-ID', {day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit'});
                     
@@ -418,7 +411,6 @@
                         bgKoreksi = "bg-red-50 border-red-200 text-red-800";
                     }
                     
-                    // Membuat elemen kartu laporan dengan tombol hapus sampah di pojok kanan atas
                     const kartuLaporan = document.createElement('div');
                     kartuLaporan.className = `p-4 rounded-xl border relative ${bgKoreksi}`;
                     kartuLaporan.innerHTML = `
@@ -442,19 +434,17 @@
             }
         }
 
-        // Fungsi Baru untuk Mengirim Perintah Hapus ke Google Sheets
+        // Fungsi Mengirim Perintah Hapus ke Google Sheets
         async function hapusBaris(index) {
             const konfirmasi = confirm("Apakah Anda yakin ingin menghapus riwayat murojaah ini dari Google Sheets?");
             if (!konfirmasi) return;
 
-            // URL tujuan operasional hapus ditembak ke URL Web App Google Script Anda (GSCRIPT_GET_URL tanpa GET, menggunakan POST)
-            // Karena doGet dan doPost URL-nya sama, kita pakai variabel GSCRIPT_GET_URL saja agar praktis
             try {
                 tampilkanStatus("Sedang menghapus baris data di Google Sheets...", "bg-amber-50 border-amber-200 text-amber-700");
                 
                 const response = await fetch(GSCRIPT_GET_URL, {
                     method: 'POST',
-                    mode: 'no-cors', // Mode no-cors agar lolos security browser seperti trik sakti Anda
+                    mode: 'no-cors', 
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         "aksi": "hapus",
@@ -462,11 +452,9 @@
                     })
                 });
 
-                // Karena menggunakan mode 'no-cors', browser tidak bisa membaca respon json secara langsung.
-                // Kita beri jeda 2 detik lalu otomatis merefresh tampilan laporan agar data terbaru langsung kelihatan.
                 setTimeout(() => {
                     tampilkanStatus("🗑️ Baris berhasil dihapus dari sistem!", "bg-green-50 border-green-200 text-green-700");
-                    muatLaporan(); // Segarkan tabel riwayat otomatis
+                    muatLaporan(); 
                 }, 2000);
 
             } catch (err) {
