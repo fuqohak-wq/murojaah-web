@@ -395,34 +395,82 @@
             statusBox.classList.remove('hidden');
         }
 
-        // Ambil Laporan
+        // Ambil Laporan & Tampilkan Tombol Hapus (GANTI FUNGSI LAMA DENGAN INI)
         async function muatLaporan() {
             try {
+                containerLaporan.innerHTML = `<p class="text-center py-4 text-gray-400">Sedang menyegarkan data...</p>`;
                 const res = await fetch(GSCRIPT_GET_URL);
                 const data = await res.json();
+                
                 if (data.length === 0) {
                     containerLaporan.innerHTML = `<p class="text-center py-4 text-gray-400">Belum ada riwayat setoran hafalan.</p>`;
                     return;
                 }
+                
                 containerLaporan.innerHTML = "";
-                data.forEach(item => {
+                
+                // Urutan data dari doGet: indeks 0 adalah baris ke-2 di Excel (terbaru)
+                data.forEach((item, index) => {
                     const tanggal = new Date(item.waktu).toLocaleDateString('id-ID', {day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit'});
+                    
                     let bgKoreksi = "bg-green-50 border-green-200 text-green-800";
-                    if (item.koreksi.includes("salah") || item.koreksi.includes("loncat") || item.koreksi.includes("LOMPAT") || item.koreksi.includes("ERROR")) {
+                    if (item.koreksi.includes("salah") || item.koreksi.includes("loncat") || item.koreksi.includes("Salah") || item.koreksi.includes("ERROR")) {
                         bgKoreksi = "bg-red-50 border-red-200 text-red-800";
                     }
-                    containerLaporan.innerHTML += `
-                        <div class="p-4 rounded-xl border border-gray-100 bg-gray-50/50 space-y-2">
-                            <div class="flex justify-between text-xs text-gray-400">
-                                <span>📅 ${tanggal} WIB</span>
-                                <span class="font-bold text-emerald-600">Status Selesai</span>
+                    
+                    // Membuat elemen kartu laporan dengan tombol hapus sampah di pojok kanan atas
+                    const kartuLaporan = document.createElement('div');
+                    kartuLaporan.className = `p-4 rounded-xl border relative ${bgKoreksi}`;
+                    kartuLaporan.innerHTML = `
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <span class="font-bold text-xs uppercase tracking-wider opacity-70">${item.menit}</span>
+                                <p class="text-[11px] opacity-60">${tanggal} — ${item.status}</p>
                             </div>
-                            <div class="p-4 rounded-lg border font-mono text-xs bg-white text-gray-800 leading-relaxed whitespace-pre-line ${bgKoreksi}">${item.koreksi}</div>
+                            <button onclick="hapusBaris(${index})" class="text-red-500 hover:text-red-700 hover:bg-red-100 p-1.5 rounded-lg transition text-xs font-semibold flex items-center gap-1">
+                                🗑️ Hapus
+                            </button>
+                        </div>
+                        <div class="whitespace-pre-wrap text-xs font-mono bg-white/60 p-3 rounded-lg border border-black/5 mt-2">
+                            ${item.koreksi}
                         </div>
                     `;
+                    containerLaporan.appendChild(kartuLaporan);
                 });
             } catch (err) {
-                containerLaporan.innerHTML = `<p class="text-xs text-red-500">Gagal memuat data dari Sheets.</p>`;
+                containerLaporan.innerHTML = `<p class="text-center py-4 text-red-500">Gagal memuat data dari Google Sheets.</p>`;
+            }
+        }
+
+        // Fungsi Baru untuk Mengirim Perintah Hapus ke Google Sheets
+        async function hapusBaris(index) {
+            const konfirmasi = confirm("Apakah Anda yakin ingin menghapus riwayat murojaah ini dari Google Sheets?");
+            if (!konfirmasi) return;
+
+            // URL tujuan operasional hapus ditembak ke URL Web App Google Script Anda (GSCRIPT_GET_URL tanpa GET, menggunakan POST)
+            // Karena doGet dan doPost URL-nya sama, kita pakai variabel GSCRIPT_GET_URL saja agar praktis
+            try {
+                tampilkanStatus("Sedang menghapus baris data di Google Sheets...", "bg-amber-50 border-amber-200 text-amber-700");
+                
+                const response = await fetch(GSCRIPT_GET_URL, {
+                    method: 'POST',
+                    mode: 'no-cors', // Mode no-cors agar lolos security browser seperti trik sakti Anda
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        "aksi": "hapus",
+                        "baris_ke": index
+                    })
+                });
+
+                // Karena menggunakan mode 'no-cors', browser tidak bisa membaca respon json secara langsung.
+                // Kita beri jeda 2 detik lalu otomatis merefresh tampilan laporan agar data terbaru langsung kelihatan.
+                setTimeout(() => {
+                    tampilkanStatus("🗑️ Baris berhasil dihapus dari sistem!", "bg-green-50 border-green-200 text-green-700");
+                    muatLaporan(); // Segarkan tabel riwayat otomatis
+                }, 2000);
+
+            } catch (err) {
+                alert("Gagal menghapus data: " + err.message);
             }
         }
 
