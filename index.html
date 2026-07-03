@@ -10,7 +10,7 @@
 
     <header class="bg-emerald-600 text-white shadow-md py-6 px-4 mb-8 text-center">
         <h1 class="text-2xl md:text-3xl font-bold">🕌 Asisten Murojaah AI</h1>
-        <p class="text-sm mt-2 opacity-90">Sistem Anti-Galan: Rekam aman, bisa kirim ulang jika server AI Google sedang sibuk.</p>
+        <p class="text-sm mt-2 opacity-90">Sistem Anti-Gagal: Rekam aman, bisa kirim ulang jika server AI Google sedang sibuk.</p>
     </header>
 
     <main class="max-w-4xl mx-auto px-4 pb-12">
@@ -23,14 +23,23 @@
                 <span id="networkStatus" class="text-xs px-2.5 py-1 rounded-full font-semibold bg-green-100 text-green-700">🟢 Online</span>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-                <button id="recordBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl shadow transition flex justify-center items-center gap-2 text-base">
+            <!-- Tambahan: Input Target Surah untuk Meningkatkan Akurasi AI -->
+            <div class="space-y-1.5">
+                <label class="text-xs font-semibold text-gray-500 block">🎯 Target Surah yang Dibaca Hari Ini (Opsional - Sangat Membantu Akurasi AI):</label>
+                <input type="text" id="surahHint" placeholder="Contoh: Sebagian An-Nisa & Al-Ma'idah sampai khatam" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-gray-50/50">
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-center">
+                <button id="recordBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl shadow transition flex justify-center items-center gap-2 text-base w-full">
                     🔴 Mulai Rekam Murojaah
                 </button>
-                <button id="testMicBtn" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 px-4 rounded-xl transition flex justify-center items-center gap-2 text-sm">
+                <button id="pauseBtn" class="hidden bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 px-4 rounded-xl shadow transition flex justify-center items-center gap-2 text-base w-full">
+                    ⏸️ Jeda Rekaman
+                </button>
+                <button id="testMicBtn" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 px-4 rounded-xl transition flex justify-center items-center gap-2 text-sm w-full">
                     🔊 Tes Suara Mic
                 </button>
-                <div class="text-center md:text-right">
+                <div class="text-center md:text-right w-full">
                     <span id="timer" class="text-2xl font-mono font-bold text-gray-600">00:00:00</span>
                 </div>
             </div>
@@ -114,12 +123,14 @@
         const containerLaporan = document.getElementById('containerLaporan');
         
         const recordBtn = document.getElementById('recordBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
         const testMicBtn = document.getElementById('testMicBtn');
         const timerLabel = document.getElementById('timer');
         const volumeBar = document.getElementById('volumeBar');
         const volumeLabel = document.getElementById('volumeLabel');
         const networkStatus = document.getElementById('networkStatus');
         const offlineQueueBox = document.getElementById('offlineQueueBox');
+        const surahHintInput = document.getElementById('surahHint');
         
         const audioPlaybackBox = document.getElementById('audioPlaybackBox');
         const audioPlayer = document.getElementById('audioPlayer');
@@ -129,14 +140,16 @@
         let mediaRecorder = null;
         let audioChunks = [];
         let startTime = null;
+        let totalElapsedTime = 0; // Menyimpan durasi akumulasi sebelum dijeda
         let timerInterval = null;
         let audioCtx = null;
         let analyser = null;
         let streamGlobal = null;
         let isRecording = false;
+        let isPaused = false;
         let isTestingMic = false;
         let pendingBlob = null; 
-        let lastRecordedBlob = null; // Menyimpan cache abadi selama halaman belum di-refresh
+        let lastRecordedBlob = null; 
 
         // 1. Deteksi Sinyal Internet
         window.addEventListener('online', updateOnlineStatus);
@@ -178,6 +191,14 @@
                     return;
                 }
                 requestAnimationFrame(draw);
+
+                // Jika rekaman sedang dijeda, kosongkan visualizer tanpa mematikan loop utama
+                if (isPaused) {
+                    volumeBar.style.width = "0%";
+                    volumeLabel.textContent = "⏸️ Rekaman Dijeda";
+                    return;
+                }
+
                 analyser.getByteFrequencyData(dataArray);
                 let total = 0;
                 for (let i = 0; i < bufferLength; i++) total += dataArray[i];
@@ -222,7 +243,7 @@
                     
                     mediaRecorder.onstop = () => {
                         const audioBlob = new Blob(audioChunks, { type: mediaRecorder.mimeType });
-                        lastRecordedBlob = audioBlob; // Amankan ke dalam cache anti-gagal!
+                        lastRecordedBlob = audioBlob; 
                         
                         const audioUrl = URL.createObjectURL(audioBlob);
                         audioPlayer.src = audioUrl;
@@ -240,9 +261,17 @@
                     
                     mediaRecorder.start(1000); 
                     isRecording = true;
-                    recordBtn.textContent = "⏹️ Selesai & Kirim";
-                    recordBtn.className = "bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-xl shadow transition flex justify-center items-center gap-2 text-base";
+                    isPaused = false;
+                    totalElapsedTime = 0;
                     
+                    recordBtn.textContent = "⏹️ Selesai & Kirim";
+                    recordBtn.className = "bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-xl shadow transition flex justify-center items-center gap-2 text-base w-full";
+                    
+                    // Tampilkan Tombol Pause
+                    pauseBtn.textContent = "⏸️ Jeda Rekaman";
+                    pauseBtn.className = "bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 px-4 rounded-xl shadow transition flex justify-center items-center gap-2 text-base w-full";
+                    pauseBtn.classList.remove('hidden');
+
                     startTime = Date.now();
                     timerInterval = setInterval(updateTimer, 1000);
                     inisialisasiAudioVisualizer(stream);
@@ -253,10 +282,37 @@
             } else {
                 mediaRecorder.stop();
                 isRecording = false;
+                isPaused = false;
                 recordBtn.textContent = "🔴 Mulai Rekam Murojaah";
-                recordBtn.className = "bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl shadow transition flex justify-center items-center gap-2 text-base";
+                recordBtn.className = "bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl shadow transition flex justify-center items-center gap-2 text-base w-full";
+                
+                // Sembunyikan Tombol Pause
+                pauseBtn.classList.add('hidden');
+
                 clearInterval(timerInterval);
                 timerLabel.textContent = "00:00:00";
+                totalElapsedTime = 0;
+            }
+        });
+
+        // 3b. Fitur Jeda (Pause) & Lanjutkan (Resume)
+        pauseBtn.addEventListener('click', () => {
+            if (!mediaRecorder || !isRecording) return;
+
+            if (mediaRecorder.state === 'recording') {
+                mediaRecorder.pause();
+                isPaused = true;
+                totalElapsedTime += Date.now() - startTime; // Kunci durasi yang telah lewat
+                
+                pauseBtn.textContent = "▶️ Lanjutkan";
+                pauseBtn.className = "bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl shadow transition flex justify-center items-center gap-2 text-base w-full";
+            } else if (mediaRecorder.state === 'paused') {
+                mediaRecorder.resume();
+                isPaused = false;
+                startTime = Date.now(); // Setel waktu mulai baru pasca jeda
+                
+                pauseBtn.textContent = "⏸️ Jeda Rekaman";
+                pauseBtn.className = "bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 px-4 rounded-xl shadow transition flex justify-center items-center gap-2 text-base w-full";
             }
         });
 
@@ -284,8 +340,8 @@
                     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                     streamGlobal = stream;
                     isTestingMic = true;
-                    testMicBtn.textContent = "🛑 Matikan Tes Suara";
-                    testMicBtn.className = "bg-gray-700 text-white font-semibold py-3 px-4 rounded-xl transition flex justify-center items-center gap-2 text-sm";
+                    testMicBtn.textContent = "🛑 Matikan Tes";
+                    testMicBtn.className = "bg-gray-700 text-white font-semibold py-3 px-4 rounded-xl transition flex justify-center items-center gap-2 text-sm w-full";
                     inisialisasiAudioVisualizer(stream);
                 } catch (err) {
                     alert("Tidak dapat mengetes mic.");
@@ -293,13 +349,15 @@
             } else {
                 isTestingMic = false;
                 testMicBtn.textContent = "🔊 Tes Suara Mic";
-                testMicBtn.className = "bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 px-4 rounded-xl transition flex justify-center items-center gap-2 text-sm";
+                testMicBtn.className = "bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 px-4 rounded-xl transition flex justify-center items-center gap-2 text-sm w-full";
                 if (streamGlobal) streamGlobal.getTracks().forEach(track => track.stop());
             }
         });
 
         function updateTimer() {
-            const elapsedTime = Date.now() - startTime;
+            if (isPaused) return; // Jangan tambahkan waktu visual jika sedang dijeda
+            
+            const elapsedTime = totalElapsedTime + (Date.now() - startTime);
             const secs = Math.floor((elapsedTime / 1000) % 60);
             const mins = Math.floor((elapsedTime / 1000 / 60) % 60);
             const hrs = Math.floor((elapsedTime / 1000 / 60 / 60));
@@ -312,6 +370,11 @@
             const fileDibuat = new File([blob], `rekaman_langsung.${ext}`, { type: blob.type });
             const formData = new FormData();
             formData.append('file', fileDibuat);
+            
+            // Masukkan hint target surah ke dalam formData jika diisi oleh user
+            if (surahHintInput && surahHintInput.value.trim() !== "") {
+                formData.append('surah_hint', surahHintInput.value.trim());
+            }
             
             try {
                 const response = await fetch(BACKEND_URL, { method: 'POST', body: formData });
