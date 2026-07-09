@@ -154,24 +154,30 @@
 
         function getApiKey() { return document.getElementById("geminiKey").value.trim(); }
 
-        // ================= ENGINE 1: AMBIL DATA & GENERATE LIST DI KIRI =================
+// ================= DOWNLOAD DATA & AMBIL DAFTAR PROYEK (VERSI POST BEBAS CORS) =================
         async function muatDaftarProyek() {
             const container = document.getElementById("projectListContainer");
             container.innerHTML = `<div class="text-xs text-slate-500 italic p-3 text-center"><i class="fa-solid fa-spinner animate-spin mr-1"></i> Sinkronisasi sheet...</div>`;
             
             try {
-                const response = await fetch(`${APPS_SCRIPT_URL}?action=readData&sheet=Tab_Ide`, {
-                    method: "GET",
-                    redirect: "follow"
+                // Mengubah parameter menjadi Body POST agar bypass CORS Google Redirect
+                const response = await fetch(APPS_SCRIPT_URL, {
+                    method: "POST",
+                    body: JSON.stringify({
+                        action: "readData",
+                        targetSheet: "Tab_Ide"
+                    }),
+                    headers: { "Content-Type": "text/plain" } // Menggunakan text/plain mencegah preflight CORS error
                 });
                 const result = await response.json();
                 
                 if (result.status === "success" && result.data.length > 0) {
-                    globalProjectList = result.data; // Simpan ke memory
+                    globalProjectList = result.data; 
                     container.innerHTML = "";
                     
-                    // Render list dari yang paling baru di atas
-                    result.data.asReversed().forEach((row, index) => {
+                    const listTerbalik = result.data.slice().reverse();
+                    
+                    listTerbalik.forEach((row, index) => {
                         const namaProyek = row["Nama Proyek"] || Object.values(row)[1];
                         const status = row["Status"] || Object.values(row)[2] || "BERJALAN";
                         const originalIndex = result.data.length - 1 - index;
@@ -193,7 +199,8 @@
                     container.innerHTML = `<div class="text-xs text-slate-500 italic p-3 text-center">Belum ada proyek tersimpan</div>`;
                 }
             } catch (err) {
-                container.innerHTML = `<div class="text-xs text-rose-400 p-3 text-center">Gagal koneksi database</div>`;
+                console.error(err);
+                container.innerHTML = `<div class="text-xs text-rose-400 p-3 text-center"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Gagal koneksi database</div>`;
             }
         }
 
