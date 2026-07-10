@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Pesantren Brochure Generator</title>
-    <!-- SOLUSI: Menggunakan Tailwind CSS v3 Stabil untuk menghindari error warna 'oklch' saat download -->
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@3"></script>
+    <!-- PERBAIKAN: Menggunakan CDN Tailwind v3 resmi yang stabil & lancar -->
+    <script src="https://cdn.tailwindcss.com/3.4.15"></script>
     <!-- Html2Canvas untuk Download Gambar -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
@@ -19,12 +19,13 @@
             border-radius: 1rem;
             border: 1px dashed #cbd5e1;
             overflow: hidden;
+            position: relative;
         }
 
-        /* SOLUSI KEDUA: Memaksa kontainer pratinjau mengikuti aspek rasio yang dipilih secara ketat */
+        /* Memaksa kontainer pratinjau mengikuti aspek rasio yang dipilih secara ketat */
         #canvasBrosur {
             width: 100%;
-            max-width: 450px; /* Ukuran kotak ideal untuk preview */
+            max-width: 450px; 
             background: #ffffff;
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
             border-radius: 0.75rem;
@@ -43,7 +44,7 @@
             aspect-ratio: 1 / 1.414 !important;
         }
 
-        /* Memaksa elemen batiniah buatan Gemini muat di dalam rasio terkunci */
+        /* Memaksa elemen buatan Gemini muat di dalam rasio terkunci */
         #canvasBrosur > div {
             width: 100% !important;
             height: 100% !important;
@@ -122,7 +123,7 @@
                         <p class="text-sm font-medium text-gray-700">AI sedang mendesain ulang brosur...</p>
                     </div>
                     
-                    <!-- Wadah Utama Hasil Render HTML AI dengan Rasio Bawaan Kotak -->
+                    <!-- Wadah Utama Hasil Render HTML AI -->
                     <div id="canvasBrosur" class="ratio-1-1">
                         <div class="w-full h-full flex items-center justify-center p-6 text-center text-gray-400">
                             Hasil brosur profesional Anda akan muncul utuh di sini
@@ -178,9 +179,8 @@
                 return;
             }
 
-            // Atur kelas aspek rasio kontainer berdasarkan pilihan dropdown sebelum memanggil AI
             const canvas = document.getElementById('canvasBrosur');
-            canvas.className = ""; // Reset kelas rasio
+            canvas.className = ""; 
             if (formatBrosur.includes("1:1")) {
                 canvas.classList.add("ratio-1-1");
             } else if (formatBrosur.includes("9:16")) {
@@ -217,7 +217,6 @@
         function downloadBrosur() {
             const element = document.getElementById('canvasBrosur');
             
-            // Konfigurasi konversi gambar super aman dan presisi tanpa kendala format warna
             html2canvas(element, {
                 useCORS: true,
                 scale: 2, 
@@ -227,7 +226,7 @@
                 height: element.clientHeight
             }).then(canvas => {
                 const link = document.createElement('a');
-                link.download = `brosur-pesantren-1ke1.png`;
+                link.download = `brosur-pesantren.png`;
                 link.href = canvas.toDataURL('image/png');
                 link.click();
             }).catch(err => {
