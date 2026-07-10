@@ -8,6 +8,30 @@
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <!-- Html2Canvas untuk Download Gambar -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        /* Mencegah pemotongan visual pada area preview brosur */
+        .preview-container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            width: 100%;
+            overflow-x: auto;
+            padding: 10px;
+            background: #f3f4f6;
+            border-radius: 1rem;
+            border: 1px dashed #cbd5e1;
+        }
+        /* Mengunci dimensi dasar agar html2canvas menangkap resolusi penuh tanpa terpotong */
+        #canvasBrosur {
+            width: 100%;
+            max-width: 500px; /* Ukuran pas untuk preview dan standar ekspor */
+            box-sizing: border-box;
+        }
+        #canvasBrosur > div {
+            width: 100% !important;
+            height: auto !important;
+        }
+    </style>
 </head>
 <body class="bg-gray-50 min-h-screen text-gray-800 font-sans">
 
@@ -17,7 +41,7 @@
             <p class="text-gray-600">Ubah banyak foto mentah menjadi brosur profesional bertenaga AI Gemini</p>
         </header>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
             <!-- Form Input (Kiri) -->
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                 <h2 class="text-xl font-semibold mb-4 text-gray-700">Konfigurasi Brosur</h2>
@@ -25,12 +49,12 @@
                 <div class="space-y-4">
                     <div>
                         <label class="block text-sm font-medium mb-1">Apa yang ingin ditulis? (Informasi/Nama Pesantren)</label>
-                        <textarea id="infoTeks" rows="3" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-emerald-500" placeholder="Contoh: Pesantren Al-Ikhlas, menerima santri baru 2026. Fasilitas lengkap, tahfidz Al-Quran..."></textarea>
+                        <textarea id="infoTeks" rows="4" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="Contoh: Ponpes Miftahul Ulum Yahyawiyyah, Desa Talun Kecamatan Kayen Kabupaten Pati. Unit Pendidikan: Madrasah Diniyah, Tahfidz Al-Qur'an..."></textarea>
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium mb-1">Format Brosur (Ukuran/Layout)</label>
-                        <select id="formatBrosur" class="w-full p-3 border rounded-lg bg-white">
+                        <select id="formatBrosur" class="w-full p-3 border border-gray-300 rounded-lg bg-white">
                             <option value="Poster Instagram (1:1)">Poster Instagram (1:1)</option>
                             <option value="Pamflet Story (9:16)">Pamflet Story (9:16)</option>
                             <option value="Brosur Cetak A4 (Portrait)">Brosur Cetak A4 (Portrait)</option>
@@ -39,7 +63,7 @@
 
                     <div>
                         <label class="block text-sm font-medium mb-1">Model / Tema Brosur</label>
-                        <select id="modelBrosur" class="w-full p-3 border rounded-lg bg-white">
+                        <select id="modelBrosur" class="w-full p-3 border border-gray-300 rounded-lg bg-white">
                             <option value="Modern & Minimalis">Modern & Minimalis</option>
                             <option value="Tradisional Islami (Mewah/Gold)">Tradisional Islami (Mewah/Gold)</option>
                             <option value="Ceria & Edukatif (Anak-anak)">Ceria & Edukatif (Anak-anak)</option>
@@ -48,7 +72,7 @@
 
                     <div>
                         <label class="block text-sm font-medium mb-1">Mode Gaya Visual Foto</label>
-                        <select id="gayaVisual" class="w-full p-3 border rounded-lg bg-white">
+                        <select id="gayaVisual" class="w-full p-3 border border-gray-300 rounded-lg bg-white">
                             <option value="asli">Asli (Elegan & Natural)</option>
                             <option value="kartun">Kartun / Ilustratif (Pop Art)</option>
                             <option value="vintage">Vintage / Estetik Klasik</option>
@@ -56,51 +80,51 @@
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium mb-1">Upload Foto-Foto Pesantren (Bisa pilih banyak)</label>
-                        <input type="file" id="fotoInput" accept="image/*" multiple class="w-full p-2 border rounded-lg">
-                        <p class="text-xs text-gray-400 mt-1">*Anda bisa memilih lebih dari 1 foto sekaligus (Tahan Ctrl / Shift + Klik foto).</p>
+                        <label class="block text-sm font-medium mb-1">Upload Foto-Foto Pesantren</label>
+                        <input type="file" id="fotoInput" accept="image/*" multiple class="w-full p-2 border border-gray-300 rounded-lg bg-white">
+                        <p class="text-xs text-gray-400 mt-1">*Pilih lebih dari 1 foto sekaligus menggunakan tombol Ctrl/Shift + Klik.</p>
                     </div>
 
-                    <button id="btnGenerate" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-3 rounded-lg transition">
+                    <button id="btnGenerate" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-3 rounded-lg transition shadow-md cursor-pointer">
                         Buat Brosur Otomatis ✨
                     </button>
                 </div>
             </div>
 
             <!-- Preview & Unduh (Kanan) -->
-            <div class="flex flex-col items-center">
-                <div class="w-full bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mb-4 min-h-[400px] flex items-center justify-center relative overflow-hidden">
-                    <div id="loading" class="hidden text-center z-10">
+            <div class="space-y-4 w-full">
+                <h2 class="text-xl font-semibold text-gray-700">Live Preview Brosur</h2>
+                
+                <div class="preview-container min-h-[500px] flex items-center justify-center relative">
+                    <div id="loading" class="hidden text-center z-10 absolute bg-white/90 p-6 rounded-xl shadow-md">
                         <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-600 mx-auto mb-2"></div>
-                        <p class="text-sm text-gray-500">AI sedang mendesain brosur Anda...</p>
+                        <p class="text-sm font-medium text-gray-700">AI sedang mendesain ulang brosur...</p>
                     </div>
                     
-                    <!-- Tempat Hasil Render HTML dari Gemini -->
-                    <div id="canvasBrosur" class="w-full h-full">
-                        <p id="placeholderText" class="text-gray-400 text-center">Hasil brosur AI akan muncul di sini</p>
+                    <!-- Wadah Utama Hasil Render HTML AI -->
+                    <div id="canvasBrosur">
+                        <p id="placeholderText" class="text-gray-400 text-center py-20">Hasil brosur profesional Anda akan muncul utuh di sini</p>
                     </div>
                 </div>
 
-                <!-- Tombol Download Gambar -->
-                <div id="downloadArea" class="hidden gap-2 w-full">
-                    <button onclick="downloadBrosur('png')" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-medium text-center cursor-pointer">Download PNG</button>
-                    <button onclick="downloadBrosur('jpeg')" class="flex-1 bg-gray-800 hover:bg-gray-900 text-white py-2 rounded-lg font-medium text-center cursor-pointer">Download JPG</button>
+                <!-- Satu Tombol Utama untuk Download (Sesuai Request) -->
+                <div id="downloadArea" class="hidden w-full">
+                    <button onclick="downloadBrosur()" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-3.5 rounded-xl font-semibold text-center shadow-lg transition-all transform hover:-translate-y-0.5 cursor-pointer">
+                        📥 Download Hasil Brosur (Format Gambar)
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // Menggunakan Web App URL milik Anda
         const BACKEND_URL = "https://script.google.com/macros/s/AKfycbwEsQd5f0yMGvGskfGBNSUcVUz6mC65o_OHJmP5QTTHi1jjgwH1_EspW9vT-1wxtlzqZw/exec"; 
 
         let listFotoBase64 = []; 
 
-        // Mengubah banyak file gambar ke Array Base64 secara asinkron
         document.getElementById('fotoInput').addEventListener('change', async function(e) {
             listFotoBase64 = []; 
             const files = e.target.files;
-            
             if (files.length === 0) return;
 
             const readFileAsBase64 = (file) => {
@@ -127,11 +151,10 @@
             const gayaVisual = document.getElementById('gayaVisual').value;
 
             if (listFotoBase64.length === 0) {
-                alert("Silakan unggah minimal satu foto pesantren!");
+                alert("Silakan unggah minimal satu foto pesantren terlebih dahulu!");
                 return;
             }
 
-            // Tampilkan Loading
             document.getElementById('loading').classList.remove('hidden');
             document.getElementById('placeholderText').classList.add('hidden');
             document.getElementById('canvasBrosur').innerHTML = "";
@@ -140,13 +163,7 @@
             try {
                 const response = await fetch(BACKEND_URL, {
                     method: 'POST',
-                    body: JSON.stringify({ 
-                        infoTeks, 
-                        formatBrosur, 
-                        modelBrosur, 
-                        gayaVisual, 
-                        listFotoBase64: listFotoBase64 
-                    })
+                    body: JSON.stringify({ infoTeks, formatBrosur, modelBrosur, gayaVisual, listFotoBase64 })
                 });
                 const data = await response.json();
 
@@ -158,19 +175,31 @@
                 }
             } catch (error) {
                 console.error(error);
-                alert("Terjadi kesalahan koneksi ke backend.");
+                alert("Terjadi kesalahan koneksi ke server backend.");
             } finally {
                 document.getElementById('loading').classList.add('hidden');
             }
         });
 
-        function downloadBrosur(format) {
+        // Perbaikan Fungsi Download: Mengatasi Isu Pemotongan Menggunakan html2canvas Khusus
+        function downloadBrosur() {
             const element = document.getElementById('canvasBrosur');
-            html2canvas(element, { useCORS: true, scale: 2 }).then(canvas => {
+            
+            // Menggunakan konfigurasi scaling tinggi agar hasil tajam dan menangkap seluruh layout batiniah elemen
+            html2canvas(element, {
+                useCORS: true,
+                scale: 3, 
+                logging: false,
+                backgroundColor: null,
+                width: element.offsetWidth,
+                height: element.offsetHeight
+            }).then(canvas => {
                 const link = document.createElement('a');
-                link.download = `brosur-pesantren.${format}`;
-                link.href = canvas.toDataURL(`image/${format}`, 0.9);
+                link.download = `brosur-pesantren-profesional.png`;
+                link.href = canvas.toDataURL('image/png');
                 link.click();
+            }).catch(err => {
+                alert("Gagal memproses unduhan gambar: " + err);
             });
         }
     </script>
