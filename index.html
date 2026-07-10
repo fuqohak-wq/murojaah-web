@@ -14,7 +14,7 @@
     <div class="max-w-6xl mx-auto px-4 py-10">
         <header class="text-center mb-10">
             <h1 class="text-4xl font-bold text-emerald-700 mb-2">Brosur Pesantren AI Generator</h1>
-            <p class="text-gray-600">Ubah foto mentah menjadi brosur profesional bertenaga AI Gemini</p>
+            <p class="text-gray-600">Ubah banyak foto mentah menjadi brosur profesional bertenaga AI Gemini</p>
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
@@ -56,8 +56,9 @@
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium mb-1">Upload Foto Pesantren</label>
-                        <input type="file" id="fotoInput" accept="image/*" class="w-full p-2 border rounded-lg">
+                        <label class="block text-sm font-medium mb-1">Upload Foto-Foto Pesantren (Bisa pilih banyak)</label>
+                        <input type="file" id="fotoInput" accept="image/*" multiple class="w-full p-2 border rounded-lg">
+                        <p class="text-xs text-gray-400 mt-1">*Anda bisa memilih lebih dari 1 foto sekaligus (Tahan Ctrl / Shift + Klik foto).</p>
                     </div>
 
                     <button id="btnGenerate" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-3 rounded-lg transition">
@@ -82,27 +83,41 @@
 
                 <!-- Tombol Download Gambar -->
                 <div id="downloadArea" class="hidden gap-2 w-full">
-                    <button onclick="downloadBrosur('png')" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-medium text-center">Download PNG</button>
-                    <button onclick="downloadBrosur('jpeg')" class="flex-1 bg-gray-800 hover:bg-gray-900 text-white py-2 rounded-lg font-medium text-center">Download JPG</button>
+                    <button onclick="downloadBrosur('png')" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-medium text-center cursor-pointer">Download PNG</button>
+                    <button onclick="downloadBrosur('jpeg')" class="flex-1 bg-gray-800 hover:bg-gray-900 text-white py-2 rounded-lg font-medium text-center cursor-pointer">Download JPG</button>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // GANTI DENGAN URL WEB APP DEPLOYMENT GOOGLE APPS SCRIPT ANDA
+        // Menggunakan Web App URL milik Anda
         const BACKEND_URL = "https://script.google.com/macros/s/AKfycbwEsQd5f0yMGvGskfGBNSUcVUz6mC65o_OHJmP5QTTHi1jjgwH1_EspW9vT-1wxtlzqZw/exec"; 
 
-        let base64String = "";
+        let listFotoBase64 = []; 
 
-        // Mengubah file gambar ke Base64 saat di-upload
-        document.getElementById('fotoInput').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            const reader = new FileReader();
-            reader.onloadend = function() {
-                base64String = reader.result.replace(/^data:image\/(png|jpg|jpeg);base64,/, "");
+        // Mengubah banyak file gambar ke Array Base64 secara asinkron
+        document.getElementById('fotoInput').addEventListener('change', async function(e) {
+            listFotoBase64 = []; 
+            const files = e.target.files;
+            
+            if (files.length === 0) return;
+
+            const readFileAsBase64 = (file) => {
+                return new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onloadend = function() {
+                        const base64 = reader.result.replace(/^data:image\/(png|jpg|jpeg);base64,/, "");
+                        resolve(base64);
+                    }
+                    reader.readAsDataURL(file);
+                });
+            };
+
+            for (let i = 0; i < files.length; i++) {
+                const base64Result = await readFileAsBase64(files[i]);
+                listFotoBase64.push(base64Result);
             }
-            if(file) reader.readAsDataURL(file);
         });
 
         document.getElementById('btnGenerate').addEventListener('click', async () => {
@@ -111,8 +126,8 @@
             const modelBrosur = document.getElementById('modelBrosur').value;
             const gayaVisual = document.getElementById('gayaVisual').value;
 
-            if (!base64String) {
-                alert("Silakan unggah foto pesantren terlebih dahulu!");
+            if (listFotoBase64.length === 0) {
+                alert("Silakan unggah minimal satu foto pesantren!");
                 return;
             }
 
@@ -125,12 +140,17 @@
             try {
                 const response = await fetch(BACKEND_URL, {
                     method: 'POST',
-                    body: JSON.stringify({ infoTeks, formatBrosur, modelBrosur, gayaVisual, fotoBase64: base64String })
+                    body: JSON.stringify({ 
+                        infoTeks, 
+                        formatBrosur, 
+                        modelBrosur, 
+                        gayaVisual, 
+                        listFotoBase64: listFotoBase64 
+                    })
                 });
                 const data = await response.json();
 
                 if (data.success) {
-                    // Masukkan HTML buatan Gemini ke dalam kontainer render
                     document.getElementById('canvasBrosur').innerHTML = data.html;
                     document.getElementById('downloadArea').classList.remove('hidden');
                 } else {
@@ -144,11 +164,8 @@
             }
         });
 
-        // Fungsi untuk mengonversi HTML renderan AI menjadi Gambar siap unduh
         function downloadBrosur(format) {
             const element = document.getElementById('canvasBrosur');
-            
-            // Memastikan Tailwind terproses di dalam html2canvas
             html2canvas(element, { useCORS: true, scale: 2 }).then(canvas => {
                 const link = document.createElement('a');
                 link.download = `brosur-pesantren.${format}`;
