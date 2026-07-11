@@ -3,149 +3,183 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Brochure Pro - Fast Version</title>
+    <title>AI Professional Carousel</title>
     <script src="https://cdn.tailwindcss.com/3.4.15"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
-        .ratio-square .instagram-slide { aspect-ratio: 1 / 1 !important; width: 100%; max-width: 500px; }
-        .instagram-slide { background: white; overflow: hidden; display: flex; flex-direction: column; position: relative; box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1); }
+        @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Plus+Jakarta+Sans:wght@400;700;800&display=swap');
+        
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f8fafc; }
+        
+        /* KUNCI ASPEK RASIO KETAT */
+        .ratio-square .instagram-slide { 
+            width: 450px !important; 
+            height: 450px !important; 
+            flex-shrink: 0;
+        }
+        .ratio-story .instagram-slide { 
+            width: 360px !important; 
+            height: 640px !important; 
+            flex-shrink: 0;
+        }
+
+        #canvasBrosur {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .instagram-slide {
+            background: white;
+            position: relative;
+            box-sizing: border-box;
+        }
+
         .font-arabic { font-family: 'Amiri', serif; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f1f5f9; }
     </style>
 </head>
-<body class="py-10 px-4">
+<body class="p-4 md:p-10">
 
-<div id="loading" class="hidden fixed inset-0 bg-slate-900/90 z-50 flex flex-col items-center justify-center text-white">
-    <div class="w-16 h-16 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-    <p class="text-lg font-bold">Sedang Memproses... (Biasanya 10-20 detik)</p>
-    <p class="text-sm text-slate-400">Mengompres gambar & Menghubungi AI</p>
+<div id="loading" class="hidden fixed inset-0 bg-slate-900/95 z-50 flex flex-col items-center justify-center text-white">
+    <div class="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+    <p class="font-bold tracking-widest uppercase text-xs">AI IS CURATING YOUR CONTENT...</p>
 </div>
 
-<div class="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10">
-    <!-- Panel Kiri -->
-    <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 space-y-5">
-        <h1 class="text-2xl font-black text-slate-800">Brosur AI Pro ✨</h1>
-        
-        <div>
-            <label class="block text-sm font-bold mb-1">Nama Pesantren</label>
-            <input type="text" id="infoTeks" class="w-full p-3 bg-slate-50 border rounded-xl" placeholder="Miftahul Ulum...">
+<div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10">
+    <!-- Panel Kontrol -->
+    <div class="bg-white p-8 rounded-3xl shadow-xl space-y-5 border border-slate-100">
+        <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center text-white font-bold">AI</div>
+            <h1 class="text-xl font-extrabold text-slate-800 tracking-tight">Premium Carousel Maker</h1>
         </div>
 
-        <div>
-            <label class="block text-sm font-bold mb-1">Teks / Fasilitas (Termasuk Teks Arab)</label>
-            <textarea id="catatanTambahan" rows="5" class="w-full p-3 bg-slate-50 border rounded-xl text-sm font-arabic" placeholder="Tempel teks Arab atau info fasilitas di sini..."></textarea>
-        </div>
-
-        <div class="grid grid-cols-2 gap-4">
+        <div class="space-y-4">
             <div>
-                <label class="block text-sm font-bold mb-1">Jumlah Slide</label>
-                <select id="jumlahGambar" class="w-full p-3 bg-slate-50 border rounded-xl">
-                    <option value="3">3 Slide</option>
-                    <option value="5" selected>5 Slide</option>
+                <label class="block text-xs font-black uppercase text-slate-500 mb-1">Nama Pesantren</label>
+                <input type="text" id="infoTeks" class="w-full p-4 bg-slate-50 border rounded-2xl focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="Contoh: Al-Mashuriyah International">
+            </div>
+
+            <div>
+                <label class="block text-xs font-black uppercase text-slate-500 mb-1">Materi / Teks Arab (Input Sebanyak Mungkin)</label>
+                <textarea id="catatanTambahan" rows="6" class="w-full p-4 bg-slate-50 border rounded-2xl focus:ring-2 focus:ring-emerald-500 outline-none text-sm font-arabic" placeholder="Tempel materi panjang di sini, AI akan merangkumnya otomatis..."></textarea>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-black uppercase text-slate-500 mb-1">Format</label>
+                    <select id="formatBrosur" class="w-full p-4 bg-slate-50 border rounded-2xl outline-none">
+                        <option value="ratio-square">Persegi 1:1 (Post)</option>
+                        <option value="ratio-story">Portrait 9:16 (Story)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-black uppercase text-slate-500 mb-1">Slide</label>
+                    <select id="jumlahGambar" class="w-full p-4 bg-slate-50 border rounded-2xl outline-none">
+                        <option value="4">4 Halaman</option>
+                        <option value="6" selected>6 Halaman</option>
+                        <option value="8">8 Halaman</option>
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-black uppercase text-slate-500 mb-1">Model Warna</label>
+                <select id="modelBrosur" class="w-full p-4 bg-slate-50 border rounded-2xl outline-none">
+                    <option value="Mewah (Deep Emerald Green & Gold)">Emerald Gold Luxury</option>
+                    <option value="Modern (Deep Blue & White)">Corporate Modern Blue</option>
+                    <option value="Eksklusif (Black & Gold Premium)">Black & Gold Premium</option>
                 </select>
             </div>
+
             <div>
-                <label class="block text-sm font-bold mb-1">Tema Warna</label>
-                <select id="modelBrosur" class="w-full p-3 bg-slate-50 border rounded-xl">
-                    <option value="Mewah (Emerald Gold)">Emerald Gold</option>
-                    <option value="Eksklusif (Black Gold)">Black Gold</option>
-                    <option value="Modern (White Blue)">Modern Blue</option>
-                </select>
+                <label class="block text-xs font-black uppercase text-slate-500 mb-1">Foto Galeri</label>
+                <input type="file" id="fotoInput" multiple accept="image/*" class="w-full text-xs">
             </div>
-        </div>
 
-        <div>
-            <label class="block text-sm font-bold mb-1">Upload Foto Pondok</label>
-            <input type="file" id="fotoInput" multiple accept="image/*" class="w-full text-sm">
-            <p class="text-[10px] text-slate-400 mt-1">*Foto akan dikompres otomatis agar proses cepat</p>
+            <button id="btnGenerate" class="w-full bg-slate-900 text-white font-black py-5 rounded-2xl hover:bg-black transition shadow-2xl transform active:scale-95">
+                GENERATE PREMIUM SLIDES ✨
+            </button>
         </div>
-
-        <button id="btnGenerate" class="w-full bg-emerald-600 text-white font-bold py-4 rounded-2xl hover:bg-emerald-700 transition shadow-lg shadow-emerald-200">
-            MULAI DESAIN OTOMATIS
-        </button>
     </div>
 
-    <!-- Panel Kanan -->
-    <div class="space-y-6">
-        <h2 class="text-xl font-bold text-slate-800">Pratinjau Hasil</h2>
-        <div id="canvasBrosur" class="ratio-square flex flex-col gap-8 items-center">
-            <div class="instagram-slide p-10 items-center justify-center border-2 border-dashed border-slate-300 rounded-2xl text-slate-400">
-                Hasil akan muncul di sini...
+    <!-- Preview -->
+    <div class="flex flex-col items-center">
+        <div class="flex justify-between w-full max-w-[450px] mb-4 items-end">
+            <h2 class="text-xl font-bold text-slate-800">Preview Design</h2>
+            <span class="text-[10px] bg-slate-200 px-2 py-1 rounded font-bold">HI-RES OUTPUT</span>
+        </div>
+        
+        <div id="canvasBrosur" class="ratio-square">
+            <div class="instagram-slide flex items-center justify-center border-4 border-dashed border-slate-200 rounded-3xl text-slate-300 font-bold uppercase text-xs tracking-widest bg-white">
+                No Design Generated
             </div>
         </div>
-        <button id="btnDownload" class="hidden w-full bg-slate-900 text-white py-4 rounded-2xl font-bold shadow-xl">
-            📥 DOWNLOAD SEMUA SLIDE (PNG)
+
+        <button id="btnDownload" class="hidden mt-8 w-full max-w-[450px] bg-emerald-600 text-white font-black py-5 rounded-2xl shadow-xl hover:bg-emerald-700 transition">
+            📥 DOWNLOAD ALL SLIDES
         </button>
     </div>
 </div>
 
 <script>
     const BACKEND_URL = "https://script.google.com/macros/s/AKfycbwiLTj8sh6t9Zc6Znh1sdH_Y6u9TjOvMbo20jSRuhMRFOavsyHgkMnJr92ZTE_qEgJa/exec"; 
-
     let listFotoBase64 = [];
 
-    // Fungsi Kompresi Gambar agar pengiriman data ringan
     async function compressImage(file) {
         return new Promise((resolve) => {
             const reader = new FileReader();
             reader.readAsDataURL(file);
-            reader.onload = (event) => {
+            reader.onload = (e) => {
                 const img = new Image();
-                img.src = event.target.result;
+                img.src = e.target.result;
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 800; // Ukuran cukup untuk Instagram
-                    const scaleSize = MAX_WIDTH / img.width;
-                    canvas.width = MAX_WIDTH;
-                    canvas.height = img.height * scaleSize;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    resolve(canvas.toDataURL('image/jpeg', 0.7).split(',')[1]); // Kompres kualitas 70%
+                    const MAX = 900;
+                    const scale = MAX / Math.max(img.width, img.height);
+                    canvas.width = img.width * scale;
+                    canvas.height = img.height * scale;
+                    canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+                    resolve(canvas.toDataURL('image/jpeg', 0.8).split(',')[1]);
                 };
             };
         });
     }
 
-    document.getElementById('fotoInput').addEventListener('change', async (e) => {
+    document.getElementById('fotoInput').onchange = async (e) => {
         listFotoBase64 = [];
-        const files = e.target.files;
-        for (let file of files) {
-            const compressed = await compressImage(file);
-            listFotoBase64.push(compressed);
+        for (let file of e.target.files) {
+            listFotoBase64.push(await compressImage(file));
         }
-    });
+    };
 
     document.getElementById('btnGenerate').onclick = async () => {
         const info = document.getElementById('infoTeks').value;
-        if (!info || listFotoBase64.length === 0) return alert("Isi Nama & Foto!");
+        if (!info || listFotoBase64.length === 0) return alert("Lengkapi Nama & Foto!");
 
         document.getElementById('loading').classList.remove('hidden');
-        
-        try {
-            // Gunakan JSON Body (lebih stabil untuk data besar)
-            const payload = {
-                infoTeks: info,
-                catatanTambahan: document.getElementById('catatanTambahan').value,
-                jumlahGambar: document.getElementById('jumlahGambar').value,
-                modelBrosur: document.getElementById('modelBrosur').value,
-                listFotoBase64: listFotoBase64
-            };
+        const format = document.getElementById('formatBrosur').value;
+        document.getElementById('canvasBrosur').className = format;
 
+        try {
             const res = await fetch(BACKEND_URL, {
                 method: 'POST',
-                body: JSON.stringify(payload)
+                body: JSON.stringify({
+                    infoTeks: info,
+                    catatanTambahan: document.getElementById('catatanTambahan').value,
+                    formatBrosur: format,
+                    jumlahGambar: document.getElementById('jumlahGambar').value,
+                    modelBrosur: document.getElementById('modelBrosur').value,
+                    listFotoBase64: listFotoBase64
+                })
             });
-            
             const data = await res.json();
             if (data.success) {
                 document.getElementById('canvasBrosur').innerHTML = data.html;
                 document.getElementById('btnDownload').classList.remove('hidden');
-            } else {
-                alert("Gagal: " + data.error);
             }
         } catch (e) {
-            alert("Timeout atau Koneksi Terputus. Pastikan URL Script benar & Deploy sebagai 'Anyone'.");
+            alert("Error Koneksi!");
         } finally {
             document.getElementById('loading').classList.add('hidden');
         }
@@ -154,12 +188,12 @@
     document.getElementById('btnDownload').onclick = async () => {
         const slides = document.querySelectorAll('.instagram-slide');
         for (let i = 0; i < slides.length; i++) {
-            const canvas = await html2canvas(slides[i], { scale: 2 });
+            const canvas = await html2canvas(slides[i], { scale: 3, useCORS: true });
             const a = document.createElement('a');
-            a.download = `Brosur-Slide-${i+1}.png`;
-            a.href = canvas.toDataURL();
+            a.download = `Slide-${i+1}.png`;
+            a.href = canvas.toDataURL('image/png');
             a.click();
-            await new Promise(r => setTimeout(r, 500));
+            await new Promise(r => setTimeout(r, 600));
         }
     };
 </script>
