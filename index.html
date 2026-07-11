@@ -11,48 +11,49 @@
     <style>
         .preview-container {
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
             width: 100%;
             padding: 20px;
             background: #f3f4f6;
             border-radius: 1rem;
             border: 1px dashed #cbd5e1;
-            overflow: hidden;
             position: relative;
         }
  
-        /* Memaksa kontainer pratinjau mengikuti aspek rasio yang dipilih secara ketat */
+        /* Kontainer Utama menampung susunan slide secara vertikal agar rapi di preview */
         #canvasBrosur {
             width: 100%;
             max-width: 450px; 
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            transition: all 0.3s ease;
+        }
+ 
+        /* Kelas Dinamis untuk Mengunci Dimensi Aspek Rasio per Slide */
+        .ratio-1-1 .instagram-slide {
+            aspect-ratio: 1 / 1 !important;
+        }
+        .ratio-9-16 .instagram-slide {
+            aspect-ratio: 9 / 16 !important;
+        }
+        .ratio-a4 .instagram-slide {
+            aspect-ratio: 1 / 1.414 !important;
+        }
+ 
+        /* Struktur standar untuk setiap halaman slide */
+        .instagram-slide {
+            width: 100% !important;
             background: #ffffff;
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
             border-radius: 0.75rem;
             overflow: hidden;
-            transition: all 0.3s ease;
-        }
- 
-        /* Kelas Dinamis untuk Mengunci Dimensi Aspek Rasio */
-        .ratio-1-1 {
-            aspect-ratio: 1 / 1 !important;
-        }
-        .ratio-9-16 {
-            aspect-ratio: 9 / 16 !important;
-        }
-        .ratio-a4 {
-            aspect-ratio: 1 / 1.414 !important;
-        }
- 
-        /* Memaksa elemen buatan Gemini muat di dalam rasio terkunci */
-        #canvasBrosur > div {
-            width: 100% !important;
-            height: 100% !important;
+            box-sizing: border-box !important;
             display: flex !important;
             flex-direction: column !important;
             justify-content: space-between !important;
-            box-sizing: border-box !important;
-            overflow-y: auto !important; /* Diubah ke auto agar jika multi-slide vertikal tetap terlihat */
+            position: relative;
         }
     </style>
 </head>
@@ -75,7 +76,6 @@
                         <textarea id="infoTeks" rows="3" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="Contoh: Ponpes Miftahul Ulum Yahyawiyyah, Jl. Pesantren No. 10..."></textarea>
                     </div>
 
-                    <!-- FITUR BARU: Input Catatan Tambahan untuk diolah AI -->
                     <div>
                         <label class="block text-sm font-medium mb-1">Catatan Tambahan (Fasilitas/Keunggulan/Ekstra) <span class="text-emerald-600 font-normal">(Akan diringkas AI otomatis)</span></label>
                         <textarea id="catatanTambahan" rows="4" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="Masukkan poin-poin mentah. Contoh: Kami punya lab komputer, asrama ber-AC, ekskul memanah, tahfidz 30 juz, dll..."></textarea>
@@ -91,7 +91,6 @@
                             </select>
                         </div>
                         
-                        <!-- FITUR BARU: Dropdown pilihan jumlah gambar/halaman -->
                         <div>
                             <label class="block text-sm font-medium mb-1">Jumlah Slide/Gambar</label>
                             <select id="jumlahGambar" class="w-full p-3 border border-gray-300 rounded-lg bg-white">
@@ -140,14 +139,14 @@
                 <h2 class="text-xl font-semibold text-gray-700">Live Preview Brosur</h2>
                  
                 <div class="preview-container min-h-[500px]">
-                    <div id="loading" class="hidden text-center z-20 absolute bg-white/95 p-6 rounded-xl shadow-md">
+                    <div id="loading" class="hidden text-center z-20 absolute bg-white/95 p-6 rounded-xl shadow-md font-sans">
                         <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-600 mx-auto mb-2"></div>
                         <p class="text-sm font-medium text-gray-700">AI sedang mendesain & meringkas konten...</p>
                     </div>
                      
                     <!-- Wadah Utama Hasil Render HTML AI -->
                     <div id="canvasBrosur" class="ratio-1-1">
-                        <div class="w-full h-full flex items-center justify-center p-6 text-center text-gray-400">
+                        <div class="instagram-slide p-6 text-center text-gray-400 items-center justify-center min-h-[400px]">
                             Hasil brosur profesional Anda akan muncul utuh di sini
                         </div>
                     </div>
@@ -156,7 +155,7 @@
                 <!-- Tombol Download -->
                 <div id="downloadArea" class="hidden w-full">
                     <button onclick="downloadBrosur()" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-3.5 rounded-xl font-semibold text-center shadow-lg transition-all transform hover:-translate-y-0.5 cursor-pointer">
-                        📥 Download Hasil Brosur (Format Gambar)
+                        📥 Download Semua Slide Berpisah (Format Gambar)
                     </button>
                 </div>
             </div>
@@ -238,27 +237,37 @@
             }
         });
  
-        function downloadBrosur() {
-            const element = document.getElementById('canvasBrosur');
-            
-            // Mengatur scroll ke atas agar html2canvas menangkap semua area slide
-            element.scrollTop = 0;
+        // Perbaikan Fungsi Download: Memotong & mendownload setiap slide satu per satu
+        async function downloadBrosur() {
+            const slides = document.querySelectorAll('#canvasBrosur .instagram-slide');
+            if (slides.length === 0) {
+                alert("Tidak ada slide yang ditemukan untuk diunduh.");
+                return;
+            }
 
-            html2canvas(element, {
-                useCORS: true,
-                scale: 2, 
-                logging: false,
-                backgroundColor: "#ffffff",
-                width: element.scrollWidth,
-                height: element.scrollHeight
-            }).then(canvas => {
-                const link = document.createElement('a');
-                link.download = `brosur-pesantren-ai.png`;
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-            }).catch(err => {
-                alert("Gagal memproses unduhan gambar: " + err);
-            });
+            // Loop untuk mengunduh setiap slide terpisah secara berkala agar tidak terblokir browser
+            for (let i = 0; i < slides.length; i++) {
+                const slide = slides[i];
+                
+                await html2canvas(slide, {
+                    useCORS: true,
+                    scale: 2, 
+                    logging: false,
+                    backgroundColor: null, // mempertahankan background warna dari template asli AI
+                    width: slide.offsetWidth,
+                    height: slide.offsetHeight
+                }).then(canvas => {
+                    const link = document.createElement('a');
+                    link.download = `brosur-slide-${i + 1}.png`;
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                }).catch(err => {
+                    console.error("Gagal mendownload slide " + (i + 1), err);
+                });
+                
+                // Delay 300ms antar download agar browser tidak mendeteksi sebagai spam pop-up
+                await new Promise(resolve => setTimeout(resolve, 300));
+            }
         }
     </script>
 </body>
