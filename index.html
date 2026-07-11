@@ -3,85 +3,122 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Premium AI Design Studio</title>
+    <title>AI Premium Pesantren Designer</title>
     <script src="https://cdn.tailwindcss.com/3.4.15"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cinzel:wght@700&family=Plus+Jakarta+Sans:wght@400;700;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: #020617; color: #f8fafc; }
+        
+        /* ASPECT RATIO LOCK */
         .ratio-square .instagram-slide { width: 450px !important; height: 450px !important; flex-shrink: 0; }
         .ratio-story .instagram-slide { width: 360px !important; height: 640px !important; flex-shrink: 0; }
-        .instagram-slide { background: white; box-shadow: 0 40px 80px -15px rgba(0,0,0,0.8); overflow: hidden; border-radius: 12px; }
-        #canvasBrosur { display: flex; flex-direction: column; gap: 50px; align-items: center; padding: 40px 0; }
-        input, textarea, select { background: rgba(15, 23, 42, 0.8) !important; border: 1px solid #334155 !important; color: white !important; outline: none; }
+        .ratio-a4 .instagram-slide { width: 450px !important; height: 636px !important; flex-shrink: 0; }
+
+        .instagram-slide { background: white; box-shadow: 0 40px 100px rgba(0,0,0,0.8); border-radius: 8px; overflow: hidden; }
+        #canvasBrosur { display: flex; flex-direction: column; gap: 50px; align-items: center; padding: 50px 0; }
+        
+        .panel-glass { background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.05); }
+        input, textarea, select { background: rgba(2, 6, 23, 0.8) !important; border: 1px solid #1e293b !important; color: white !important; outline: none; }
+        input:focus, textarea:focus { border-color: #f59e0b !important; }
     </style>
 </head>
-<body class="p-4 md:p-8">
+<body class="p-4 md:p-10">
 
-<!-- Loading UI -->
-<div id="loading" class="hidden fixed inset-0 bg-black/95 z-[100] flex flex-col items-center justify-center text-white">
-    <div class="w-14 h-14 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-    <p id="loadingText" class="text-[10px] font-black tracking-[0.4em] uppercase text-amber-500">Processing Masterpiece...</p>
+<div id="loading" class="hidden fixed inset-0 bg-black/95 z-[100] flex flex-col items-center justify-center">
+    <div class="w-16 h-16 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+    <p id="loadingText" class="text-[10px] font-black tracking-[0.5em] uppercase text-amber-500">Processing Your Masterpiece</p>
 </div>
 
 <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-10">
-    <!-- INPUT PANEL -->
-    <div class="lg:col-span-5 bg-slate-900/50 p-8 rounded-[3rem] border border-slate-800 space-y-5 backdrop-blur-xl">
+    <!-- PANEL KONTROL -->
+    <div class="lg:col-span-5 panel-glass p-8 rounded-[3rem] shadow-2xl space-y-5">
         <div class="flex justify-between items-center border-b border-slate-800 pb-5">
-            <h1 class="text-xl font-black text-amber-500 tracking-tighter">PREMIUM.STUDIO</h1>
+            <h1 class="text-xl font-black text-amber-500 italic tracking-tighter">PREMIUM.DESIGNER</h1>
             <div class="flex gap-2">
                 <input type="text" id="loadId" placeholder="ID" class="w-16 p-2 rounded-xl text-center text-xs font-bold">
-                <button id="btnLoad" class="bg-amber-600 hover:bg-amber-500 text-white px-4 py-2 rounded-xl text-[10px] font-black">LOAD</button>
+                <button id="btnLoad" class="bg-amber-600 text-white px-4 py-2 rounded-xl text-[10px] font-black hover:bg-amber-500">LOAD</button>
             </div>
         </div>
 
         <div class="space-y-4">
-            <input type="text" id="infoTeks" class="w-full p-4 rounded-2xl" placeholder="Judul Pesantren">
-            <textarea id="catatanTambahan" rows="4" class="w-full p-4 rounded-2xl text-sm" style="font-family: 'Amiri', serif;" placeholder="Materi & Teks Arab"></textarea>
-            
-            <div class="grid grid-cols-2 gap-4">
-                <select id="formatBrosur" class="p-4 rounded-2xl text-xs font-bold">
-                    <option value="ratio-square">FEED 1:1</option>
-                    <option value="ratio-story">STORY 9:16</option>
-                </select>
-                <select id="jumlahGambar" class="p-4 rounded-2xl text-xs font-bold">
-                    <option value="4">4 SLIDE</option>
-                    <option value="6" selected>6 SLIDE</option>
-                </select>
+            <div>
+                <label class="text-[9px] font-bold uppercase text-slate-500 mb-1 block tracking-widest ml-1">Nama Pesantren</label>
+                <input type="text" id="infoTeks" class="w-full p-4 rounded-2xl text-sm" placeholder="Judul Brosur">
             </div>
 
-            <div class="p-5 bg-slate-800/80 rounded-3xl border-2 border-dashed border-slate-700 flex flex-col items-center gap-2">
+            <div>
+                <label class="text-[9px] font-bold uppercase text-slate-500 mb-1 block tracking-widest ml-1">Materi & Teks Arab</label>
+                <textarea id="catatanTambahan" rows="4" class="w-full p-4 rounded-2xl text-xs" style="font-family: 'Amiri', serif;" placeholder="Masukkan materi/keterangan lengkap..."></textarea>
+            </div>
+
+            <div class="grid grid-cols-3 gap-3">
+                <div class="col-span-1">
+                    <label class="text-[9px] font-bold uppercase text-slate-500 mb-1 block">Format</label>
+                    <select id="formatBrosur" class="w-full p-3 rounded-xl text-[10px] font-black">
+                        <option value="ratio-square">FEED (1:1)</option>
+                        <option value="ratio-story">STORY (9:16)</option>
+                        <option value="ratio-a4">CETAK (A4)</option>
+                    </select>
+                </div>
+                <div class="col-span-1">
+                    <label class="text-[9px] font-bold uppercase text-slate-500 mb-1 block">Slide</label>
+                    <select id="jumlahGambar" class="w-full p-3 rounded-xl text-[10px] font-black">
+                        <!-- Script akan mengisi 1-10 -->
+                    </select>
+                </div>
+                <div class="col-span-1">
+                    <label class="text-[9px] font-bold uppercase text-slate-500 mb-1 block">Warna</label>
+                    <select id="modelBrosur" class="w-full p-3 rounded-xl text-[10px] font-black">
+                        <option value="Emerald Gold">EMERALD</option>
+                        <option value="Black Gold">BLACK</option>
+                        <option value="Royal Blue">BLUE</option>
+                        <option value="Tradisional">CLASSIC</option>
+                        <option value="Ceria">PASTEL</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="p-6 bg-slate-900/50 rounded-[2rem] border-2 border-dashed border-slate-700 flex flex-col items-center gap-3">
                 <input type="file" id="fotoInput" multiple accept="image/*" class="hidden">
-                <label for="fotoInput" class="bg-white text-slate-950 px-6 py-2 rounded-full text-[10px] font-black cursor-pointer uppercase">Upload Photos</label>
+                <label for="fotoInput" class="bg-white text-slate-950 px-8 py-3 rounded-full text-[10px] font-black cursor-pointer uppercase tracking-widest">Select Photos</label>
                 <p class="text-[9px] text-slate-500 font-bold uppercase">Or Paste Screenshot (Ctrl+V)</p>
-                <div id="fotoCounter" class="text-emerald-400 text-[10px] font-black hidden"></div>
+                <div id="fotoCounter" class="text-amber-500 text-[10px] font-black hidden uppercase">0 Photos Ready</div>
             </div>
 
-            <button id="btnGenerate" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-black py-5 rounded-2xl shadow-2xl transition active:scale-95 text-xs tracking-widest uppercase">Generate Now ✨</button>
+            <button id="btnGenerate" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-black py-5 rounded-2xl shadow-2xl transition active:scale-95 text-xs tracking-[0.3em] uppercase">Generate Masterpiece ✨</button>
         </div>
 
         <div id="saveArea" class="hidden p-6 bg-amber-500/10 rounded-[2.5rem] border border-amber-500/20 flex flex-col items-center">
-            <button id="btnSave" class="bg-amber-600 text-white px-8 py-3 rounded-2xl text-[10px] font-black shadow-lg uppercase tracking-[0.2em]">Save to Cloud</button>
-            <div id="resultId" class="mt-4 text-2xl font-black text-amber-500 hidden tracking-[0.2em]">ID: <span id="displayId" class="underline"></span></div>
+            <button id="btnSave" class="bg-amber-600 text-white px-10 py-3 rounded-2xl text-[10px] font-black shadow-lg uppercase tracking-widest">Save to Cloud Sheet ☁️</button>
+            <div id="resultId" class="mt-4 text-2xl font-black text-amber-500 hidden tracking-[0.3em]">ID: <span id="displayId" class="underline"></span></div>
         </div>
     </div>
 
-    <!-- PREVIEW & DOWNLOAD -->
+    <!-- PANEL SHOWCASE -->
     <div class="lg:col-span-7 flex flex-col items-center">
         <div id="canvasBrosur" class="ratio-square">
             <div class="instagram-slide flex items-center justify-center border-4 border-dashed border-slate-800 rounded-[3rem] bg-slate-900/20 p-12 text-slate-700 text-[10px] font-black uppercase tracking-widest">
-                Waiting for Design
+                Waiting for Design Engine
             </div>
         </div>
-        <button id="btnDownload" class="hidden mt-8 w-full max-w-[450px] bg-white text-slate-950 font-black py-6 rounded-[2rem] shadow-2xl hover:bg-amber-500 hover:text-white transition tracking-[0.3em] text-[10px] uppercase">
+        <button id="btnDownload" class="hidden mt-8 w-full max-w-[450px] bg-white text-slate-950 font-black py-6 rounded-[2rem] shadow-2xl hover:bg-amber-500 hover:text-white transition tracking-[0.5em] text-[10px] uppercase">
             Export All To PNG
         </button>
     </div>
 </div>
 
 <script>
-    // GANTI URL INI SETIAP KALI DEPLOY BARU
     const BACKEND_URL = "https://script.google.com/macros/s/AKfycbwiLTj8sh6t9Zc6Znh1sdH_Y6u9TjOvMbo20jSRuhMRFOavsyHgkMnJr92ZTE_qEgJa/exec"; 
+
+    // Isi Dropdown Slide 1-10
+    const selectSlide = document.getElementById('jumlahGambar');
+    for(let i=1; i<=10; i++) {
+        let opt = document.createElement('option');
+        opt.value = i; opt.innerHTML = i + " SLIDE";
+        if(i===6) opt.selected = true;
+        selectSlide.appendChild(opt);
+    }
 
     let listFotoBase64 = [];
     let currentHtml = "";
@@ -129,9 +166,9 @@
 
     document.getElementById('btnGenerate').onclick = async () => {
         const info = document.getElementById('infoTeks').value;
-        if (!info || listFotoBase64.length === 0) return alert("Isi Judul & Masukkan Foto!");
+        if (!info || listFotoBase64.length === 0) return alert("Lengkapi Judul & Foto!");
         
-        setLoading(true, "AI IS DESIGNING...");
+        setLoading(true, "AI IS CURATING CONTENT...");
         try {
             const res = await fetch(BACKEND_URL, {
                 method: 'POST',
@@ -141,44 +178,39 @@
                     catatanTambahan: document.getElementById('catatanTambahan').value,
                     formatBrosur: document.getElementById('formatBrosur').value,
                     jumlahGambar: document.getElementById('jumlahGambar').value,
-                    modelBrosur: "Mewah",
+                    modelBrosur: document.getElementById('modelBrosur').value,
                     listFotoBase64: listFotoBase64
                 })
             });
             const data = await res.json();
             if (data.success) {
                 currentHtml = data.html;
-                const canvas = document.getElementById('canvasBrosur');
-                canvas.innerHTML = data.html;
-                canvas.className = document.getElementById('formatBrosur').value;
+                document.getElementById('canvasBrosur').innerHTML = data.html;
+                document.getElementById('canvasBrosur').className = document.getElementById('formatBrosur').value;
                 document.getElementById('btnDownload').classList.remove('hidden');
                 document.getElementById('saveArea').classList.remove('hidden');
-            } else { alert("AI Error: " + data.error); }
-        } catch (e) { alert("Error: Pastikan URL Script benar!"); }
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        } catch (e) { alert("Error: Periksa URL Web App!"); }
         setLoading(false);
     };
 
-    // FUNGSI DOWNLOAD PNG (FIXED)
     document.getElementById('btnDownload').onclick = async function() {
         const slides = document.querySelectorAll('.instagram-slide');
-        if (slides.length === 0) return alert("Desain tidak ditemukan!");
-
         setLoading(true, "CAPTURING SLIDES...");
-        try {
-            for (let i = 0; i < slides.length; i++) {
-                const canvas = await html2canvas(slides[i], { scale: 3, useCORS: true, backgroundColor: null });
-                const link = document.createElement('a');
-                link.download = `Brosur-Slide-${i+1}.png`;
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-                await new Promise(r => setTimeout(r, 1000));
-            }
-        } catch (err) { alert("Download Gagal: " + err.message); }
+        for (let i = 0; i < slides.length; i++) {
+            const canvas = await html2canvas(slides[i], { scale: 3, useCORS: true });
+            const link = document.createElement('a');
+            link.download = `Slide-${i+1}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+            await new Promise(r => setTimeout(r, 1000));
+        }
         setLoading(false);
     };
 
     document.getElementById('btnSave').onclick = async () => {
-        setLoading(true, "SAVING...");
+        setLoading(true, "SYNCING TO SHEET...");
         const res = await fetch(BACKEND_URL, {
             method: 'POST',
             body: JSON.stringify({ action: 'save', html: currentHtml, infoTeks: document.getElementById('infoTeks').value })
@@ -193,7 +225,7 @@
 
     document.getElementById('btnLoad').onclick = async () => {
         const id = document.getElementById('loadId').value;
-        setLoading(true, "LOADING...");
+        setLoading(true, "FETCHING FROM CLOUD...");
         const res = await fetch(BACKEND_URL, { method: 'POST', body: JSON.stringify({ action: 'load', projectId: id }) });
         const data = await res.json();
         if (data.success) {
