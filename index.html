@@ -3,112 +3,112 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Premium Pesantren Studio</title>
+    <title>Pesantren AI - Premium Design Studio</title>
     <script src="https://cdn.tailwindcss.com/3.4.15"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Plus+Jakarta+Sans:wght@400;700;800&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f8fafc; }
+        @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cinzel:wght@700&family=Plus+Jakarta+Sans:wght@400;700;800&display=swap');
+        
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #0f172a; color: #f8fafc; }
+        
         .ratio-square .instagram-slide { width: 450px !important; height: 450px !important; flex-shrink: 0; }
         .ratio-story .instagram-slide { width: 360px !important; height: 640px !important; flex-shrink: 0; }
-        .instagram-slide { background: white; box-shadow: 0 30px 60px -12px rgba(0,0,0,0.15); overflow: hidden; border-radius: 8px; }
-        .font-arabic { font-family: 'Amiri', serif; line-height: 1.8; }
-        #canvasBrosur { display: flex; flex-direction: column; gap: 40px; align-items: center; }
+
+        .instagram-slide { background: white; box-shadow: 0 40px 80px -15px rgba(0,0,0,0.5); overflow: hidden; border-radius: 12px; }
+        .font-arabic { font-family: 'Amiri', serif; }
+        .font-heading { font-family: 'Cinzel', serif; }
+        
+        #canvasBrosur { display: flex; flex-direction: column; gap: 50px; align-items: center; padding-bottom: 50px; }
+
+        input, textarea, select { background: rgba(30, 41, 59, 0.5) !important; border: 1px solid rgba(71, 85, 105, 0.5) !important; color: white !important; }
+        ::placeholder { color: #64748b !important; }
     </style>
 </head>
-<body class="p-4 md:p-10">
+<body class="p-4 md:p-8">
 
-<div id="loading" class="hidden fixed inset-0 bg-slate-900/95 z-[100] flex flex-col items-center justify-center text-white">
-    <div class="w-14 h-14 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mb-6"></div>
-    <p id="loadingText" class="text-xs font-black tracking-widest uppercase">Designing your Masterpiece...</p>
+<!-- Loading Masterpiece -->
+<div id="loading" class="hidden fixed inset-0 bg-black/95 z-[100] flex flex-col items-center justify-center text-white">
+    <div class="w-16 h-16 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mb-6"></div>
+    <p id="loadingText" class="text-xs font-black tracking-[0.4em] uppercase text-amber-500">Menciptakan Mahakarya Anda...</p>
 </div>
 
-<div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10">
+<div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-10">
     
-    <!-- PANEL INPUT (KIRI) -->
-    <div class="bg-white p-8 rounded-[2.5rem] shadow-2xl border border-slate-100 space-y-5">
-        <div class="flex justify-between items-center border-b pb-4">
-            <h1 class="text-2xl font-black">Design Studio</h1>
+    <!-- PANEL INPUT (KIRI - 5 Kolom) -->
+    <div class="lg:col-span-5 bg-slate-900/50 p-8 rounded-[3rem] border border-slate-800 space-y-6 backdrop-blur-xl">
+        <div class="flex justify-between items-center border-b border-slate-800 pb-5">
+            <h1 class="text-2xl font-black text-amber-500 tracking-tighter italic">DESIGNER.AI</h1>
             <div class="flex gap-2">
-                <input type="text" id="loadId" placeholder="ID" class="w-16 p-2 border rounded-xl text-center text-xs font-bold bg-slate-50">
-                <button id="btnLoad" class="bg-slate-800 text-white px-4 py-2 rounded-xl text-[10px] font-bold hover:bg-black transition">LOAD</button>
+                <input type="text" id="loadId" placeholder="ID" class="w-16 p-2 rounded-xl text-center text-xs font-bold outline-none">
+                <button id="btnLoad" class="bg-amber-600 hover:bg-amber-500 text-white px-4 py-2 rounded-xl text-[10px] font-black transition">LOAD</button>
             </div>
         </div>
 
         <div class="space-y-4">
             <div>
-                <label class="text-[10px] font-black uppercase text-slate-400 ml-1">Nama Pesantren</label>
-                <input type="text" id="infoTeks" class="w-full p-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 transition outline-none" placeholder="Contoh: PP Miftahul Ulum">
+                <label class="text-[10px] font-black uppercase text-slate-500 ml-1">Judul / Nama Pondok</label>
+                <input type="text" id="infoTeks" class="w-full p-4 rounded-2xl outline-none focus:ring-2 focus:ring-amber-500 transition" placeholder="Contoh: Pondok Pesantren Al-Hikmah">
             </div>
 
             <div>
-                <label class="text-[10px] font-black uppercase text-slate-400 ml-1">Materi & Teks Arab</label>
-                <textarea id="catatanTambahan" rows="4" class="w-full p-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 transition text-sm font-arabic outline-none" placeholder="Tempel materi teks arab di sini..."></textarea>
+                <label class="text-[10px] font-black uppercase text-slate-500 ml-1">Materi Utama & Teks Arab</label>
+                <textarea id="catatanTambahan" rows="5" class="w-full p-4 rounded-2xl outline-none focus:ring-2 focus:ring-amber-500 transition text-sm font-arabic" placeholder="Tempel teks Arab dan materi di sini..."></textarea>
             </div>
 
             <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="text-[10px] font-black uppercase text-slate-400 ml-1">Format Ukuran</label>
-                    <select id="formatBrosur" class="w-full p-4 bg-slate-50 border-none rounded-2xl text-xs font-bold outline-none">
-                        <option value="ratio-square">Post 1:1 (Persegi)</option>
-                        <option value="ratio-story">Story 9:16 (Story)</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="text-[10px] font-black uppercase text-slate-400 ml-1">Jumlah Slide</label>
-                    <select id="jumlahGambar" class="w-full p-4 bg-slate-50 border-none rounded-2xl text-xs font-bold outline-none">
-                        <option value="4">4 Slide</option>
-                        <option value="6" selected>6 Slide</option>
-                        <option value="8">8 Slide</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- PILIHAN TEMA & BACKGROUND -->
-            <div>
-                <label class="text-[10px] font-black uppercase text-slate-400 ml-1">Tema Desain & Palet Warna</label>
-                <select id="modelBrosur" class="w-full p-4 bg-slate-50 border-none rounded-2xl text-xs font-bold outline-none">
-                    <option value="Mewah (Emerald Green & Gold)">Emerald Gold (Nuansa Mewah)</option>
-                    <option value="Modern (Royal Blue & White)">Modern Blue (Nuansa Bersih/Biru)</option>
-                    <option value="Ceria (Pastel & Playful)">Ceria Pastel (Nuansa Anak-anak)</option>
-                    <option value="Tradisional (Earth Tone & Brown)">Tradisional (Nuansa Klasik Kayu)</option>
-                    <option value="Eksklusif (Full Black & Gold)">Exclusive Dark (Hitam & Emas)</option>
+                <select id="formatBrosur" class="p-4 rounded-2xl text-xs font-bold outline-none">
+                    <option value="ratio-square">INSTAGRAM FEED (1:1)</option>
+                    <option value="ratio-story">INSTAGRAM STORY (9:16)</option>
+                </select>
+                <select id="jumlahGambar" class="p-4 rounded-2xl text-xs font-bold outline-none">
+                    <option value="4">4 SLIDE</option>
+                    <option value="6" selected>6 SLIDE</option>
+                    <option value="8">8 SLIDE</option>
                 </select>
             </div>
 
-            <!-- BAGIAN GALERI FOTO -->
-            <div class="p-5 bg-slate-50 rounded-[2rem] border-2 border-dashed border-slate-200">
-                <label class="text-[10px] font-black uppercase text-slate-400 block mb-3 text-center">🖼️ Galeri Foto (Bisa Upload atau Paste)</label>
-                <div class="flex flex-col items-center gap-4">
+            <select id="modelBrosur" class="w-full p-4 rounded-2xl text-xs font-bold outline-none">
+                <option value="Mewah (Emerald & Gold)">EMERALD GOLD LUXURY (MEWAH)</option>
+                <option value="Eksklusif (Black & Gold)">EXCLUSIVE DARK GOLD</option>
+                <option value="Tradisional (Earth Tone)">TRADITIONAL CLASSIC</option>
+            </select>
+
+            <div class="p-6 bg-slate-800/50 rounded-[2rem] border-2 border-dashed border-slate-700">
+                <label class="text-[10px] font-black uppercase text-slate-500 block mb-3 text-center tracking-widest">🖼️ Galeri Mahakarya</label>
+                <div class="flex flex-col items-center gap-3">
                     <input type="file" id="fotoInput" multiple accept="image/*" class="hidden">
-                    <label for="fotoInput" class="bg-white border border-slate-200 px-6 py-3 rounded-full text-[10px] font-black cursor-pointer hover:bg-slate-100 transition shadow-sm">
-                        📁 PILIH FILE FOTO
-                    </label>
-                    <div class="text-[9px] text-slate-400 text-center">Atau tekan <span class="bg-slate-200 px-1 rounded text-slate-700 font-bold">Ctrl+V</span> untuk Paste Screenshot</div>
-                    <div id="fotoCounter" class="bg-emerald-100 text-emerald-700 px-4 py-2 rounded-full text-[10px] font-black hidden"></div>
+                    <label for="fotoInput" class="bg-amber-600 hover:bg-amber-500 text-white px-8 py-3 rounded-full text-[10px] font-black cursor-pointer transition shadow-lg">UPLOAD FOTO</label>
+                    <p class="text-[9px] text-slate-500">Atau tekan <span class="text-slate-300 font-bold">Ctrl+V</span> (Paste Screenshot)</p>
+                    <div id="fotoCounter" class="bg-emerald-500/20 text-emerald-400 px-4 py-1 rounded-full text-[10px] font-black hidden uppercase">0 Foto Siap</div>
                 </div>
             </div>
 
-            <button id="btnGenerate" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-5 rounded-2xl transition shadow-xl active:scale-95">
-                GENERATE MASTERPIECE ✨
+            <button id="btnGenerate" class="w-full bg-white hover:bg-amber-500 hover:text-white text-slate-900 font-black py-5 rounded-2xl transition shadow-2xl active:scale-95 text-sm tracking-widest uppercase">
+                Generate Masterpiece ✨
             </button>
         </div>
 
-        <div id="saveArea" class="hidden p-6 bg-emerald-50 rounded-[2rem] border border-emerald-100 flex flex-col items-center">
-            <button id="btnSave" class="bg-emerald-600 text-white px-8 py-3 rounded-2xl text-xs font-black shadow-lg">SIMPAN KE CLOUD ☁️</button>
-            <div id="resultId" class="mt-4 text-xl font-black text-emerald-900 hidden tracking-widest">ID: <span id="displayId" class="underline"></span></div>
+        <div id="saveArea" class="hidden p-6 bg-amber-500/10 rounded-[2.5rem] border border-amber-500/20 flex flex-col items-center">
+            <button id="btnSave" class="bg-amber-600 text-white px-10 py-3 rounded-2xl text-xs font-black shadow-lg uppercase tracking-widest">Sync To Cloud ☁️</button>
+            <div id="resultId" class="mt-4 text-2xl font-black text-amber-500 hidden tracking-[0.2em]">ID: <span id="displayId" class="underline"></span></div>
         </div>
     </div>
 
-    <!-- PANEL PREVIEW (KANAN) -->
-    <div class="flex flex-col items-center">
+    <!-- PANEL PREVIEW (KANAN - 7 Kolom) -->
+    <div class="lg:col-span-7 flex flex-col items-center">
+        <div class="w-full max-w-[450px] flex justify-between items-end mb-6">
+            <h2 class="text-xl font-black tracking-tight text-white uppercase text-xs tracking-widest">Live Showcase</h2>
+            <span class="text-[10px] bg-emerald-500 text-white px-3 py-1 rounded-full font-black animate-pulse">4K RENDER ENGINE</span>
+        </div>
+
         <div id="canvasBrosur" class="ratio-square">
-            <div class="instagram-slide flex flex-col items-center justify-center border-4 border-dashed border-slate-200 rounded-[2rem] bg-white p-10 text-center">
-                <p class="text-slate-300 text-[10px] font-black uppercase tracking-widest">Preview Design Here</p>
+            <div class="instagram-slide flex flex-col items-center justify-center border-4 border-dashed border-slate-700 rounded-[3rem] bg-slate-900/50 p-12 text-center">
+                <p class="text-slate-600 text-[10px] font-black uppercase tracking-[0.3em]">Studio Ready</p>
             </div>
         </div>
-        <button id="btnDownload" class="hidden mt-8 w-full max-w-[450px] bg-slate-900 text-white py-5 rounded-2xl font-black hover:bg-black shadow-2xl transition tracking-[0.2em] text-xs uppercase">
-            Download All Slides
+
+        <button id="btnDownload" class="hidden mt-10 w-full max-w-[450px] bg-white text-slate-900 font-black py-6 rounded-3xl shadow-2xl hover:bg-amber-500 hover:text-white transition tracking-[0.4em] text-[10px] uppercase">
+            Export All To PNG
         </button>
     </div>
 </div>
@@ -121,7 +121,7 @@
     function updateCounter() {
         const c = document.getElementById('fotoCounter');
         if (listFotoBase64.length > 0) {
-            c.innerText = listFotoBase64.length + " FOTO SIAP PROSES";
+            c.innerText = listFotoBase64.length + " FOTO SIAP";
             c.classList.remove('hidden');
         }
     }
@@ -135,11 +135,11 @@
                 img.src = e.target.result;
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
-                    const MAX = 900;
+                    const MAX = 1000;
                     const scale = MAX / Math.max(img.width, img.height);
                     canvas.width = img.width * scale; canvas.height = img.height * scale;
                     canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-                    resolve(canvas.toDataURL('image/jpeg', 0.8).split(',')[1]);
+                    resolve(canvas.toDataURL('image/jpeg', 0.85).split(',')[1]);
                 };
             };
         });
@@ -149,10 +149,8 @@
         const items = (e.clipboardData || e.originalEvent.clipboardData).items;
         for (let item of items) {
             if (item.type.indexOf("image") !== -1) {
-                const b64 = await compressImage(item.getAsFile());
-                listFotoBase64.push(b64);
+                listFotoBase64.push(await compressImage(item.getAsFile()));
                 updateCounter();
-                showToast("📸 Screenshot di-Paste!");
             }
         }
     });
@@ -164,8 +162,8 @@
 
     document.getElementById('btnGenerate').onclick = async () => {
         const info = document.getElementById('infoTeks').value;
-        if (!info || listFotoBase64.length === 0) return alert("Isi Nama & Foto!");
-        setLoading(true, "AI SEDANG MENDESAIN...");
+        if (!info || listFotoBase64.length === 0) return alert("Pilih Nama & Masukkan Foto!");
+        setLoading(true, "AI SEDANG MERANCANG MAHA KARYA...");
         const format = document.getElementById('formatBrosur').value;
         document.getElementById('canvasBrosur').className = format;
         try {
@@ -189,12 +187,12 @@
                 document.getElementById('saveArea').classList.remove('hidden');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             }
-        } catch (e) { alert("Error Koneksi!"); }
+        } catch (e) { alert("Error! Periksa URL Web App."); }
         setLoading(false);
     };
 
     document.getElementById('btnSave').onclick = async () => {
-        setLoading(true, "MENYIMPAN...");
+        setLoading(true, "MENYIMPAN KE CLOUD SHEET...");
         const res = await fetch(BACKEND_URL, {
             method: 'POST',
             body: JSON.stringify({ action: 'save', html: currentHtml, infoTeks: document.getElementById('infoTeks').value })
@@ -210,13 +208,12 @@
     document.getElementById('btnLoad').onclick = async () => {
         const id = document.getElementById('loadId').value;
         if (!id) return;
-        setLoading(true, "LOAD PROJECT...");
+        setLoading(true, "LOAD DATA CLOUD...");
         const res = await fetch(BACKEND_URL, { method: 'POST', body: JSON.stringify({ action: 'load', projectId: id }) });
         const data = await res.json();
         if (data.success) {
             document.getElementById('canvasBrosur').innerHTML = data.html;
             document.getElementById('btnDownload').classList.remove('hidden');
-            showToast("📂 Berhasil Dimuat!");
         } else { alert("ID Salah!"); }
         setLoading(false);
     };
@@ -227,16 +224,11 @@
             const canvas = await html2canvas(slides[i], { scale: 3, useCORS: true });
             const a = document.createElement('a');
             a.download = `Slide-${i+1}.png`; a.href = canvas.toDataURL(); a.click();
-            await new Promise(r => setTimeout(r, 600));
+            await new Promise(r => setTimeout(r, 800));
         }
     };
 
     function setLoading(s, t) { document.getElementById('loading').classList.toggle('hidden', !s); document.getElementById('loadingText').innerText = t; }
-    function showToast(m) {
-        const t = document.createElement('div');
-        t.className = "fixed bottom-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-full text-[10px] font-black z-[200] animate-bounce";
-        t.innerText = m; document.body.appendChild(t); setTimeout(() => t.remove(), 2500);
-    }
 </script>
 </body>
 </html>
