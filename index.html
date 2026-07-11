@@ -3,158 +3,218 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generator Brosur AI - PPMUY</title>
-    <!-- Tailwind CSS untuk keindahan tata letak -->
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <!-- Library html2canvas untuk fitur unduh slide secara utuh tanpa terpotong -->
+    <title>AI Pesantren Brochure Generator</title>
+    <script src="https://cdn.tailwindcss.com/3.4.15"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-</head>
-<body class="bg-gray-100 text-gray-800 font-sans min-h-screen pb-12">
-
-    <div class="max-w-4xl mx-auto mt-8 p-6 bg-white rounded-xl shadow-md">
-        <h1 class="text-3xl font-bold text-emerald-800 text-center mb-6">Pembuat Brosur AI PPMUY</h1>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Amiri&family=Cinzel:wght@700&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap');
         
-        <!-- FORM PENGIRIMAN DATA -->
-        <!-- target="target_frame" inilah yang membuat aplikasi ini 100% kebal terhadap error CORS browser -->
-        <form id="formBrosur" action="" method="POST" target="target_frame" class="space-y-4">
-            
-            <div>
-                <label class="block font-medium text-gray-700 mb-1">Informasi Utama Pesantren:</label>
-                <textarea name="infoTeks" id="infoTeks" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none h-28" placeholder="Masukkan visi, misi, atau program unggulan PPMUY..."></textarea>
-            </div>
+        .preview-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            padding: 20px;
+            background: #f1f5f9;
+            border-radius: 1.25rem;
+            border: 2px dashed #cbd5e1;
+        }
 
-            <div>
-                <label class="block font-medium text-gray-700 mb-1">Catatan Tambahan (Fasilitas/Biaya dll):</label>
-                <textarea name="catatanTambahan" id="catatanTambahan" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none h-20" placeholder="Pendaftaran gelombang 1 gratis seragam..."></textarea>
-            </div>
+        #canvasBrosur {
+            width: 100%;
+            max-width: 400px; 
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        /* Rasio Dinamis */
+        .ratio-1-1 .instagram-slide { aspect-ratio: 1 / 1; }
+        .ratio-9-16 .instagram-slide { aspect-ratio: 9 / 16; }
+        .ratio-a4 .instagram-slide { aspect-ratio: 1 / 1.414; }
+
+        .instagram-slide {
+            width: 100%;
+            background: white;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(255,255,255,0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            backdrop-filter: blur(4px);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800 font-sans">
+
+<div id="loading" class="loading-overlay hidden">
+    <div class="text-center">
+        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-emerald-600 border-slate-200 mx-auto mb-4"></div>
+        <p class="font-bold text-slate-900">AI Sedang Mendesain Carousel Anda...</p>
+        <p class="text-sm text-slate-500">Menganalisis foto & menyusun layout infografis</p>
+    </div>
+</div>
+
+<div class="max-w-6xl mx-auto px-4 py-10">
+    <header class="text-center mb-10">
+        <span class="bg-emerald-100 text-emerald-800 text-xs font-bold px-3 py-1 rounded-full uppercase">Gemini AI Power</span>
+        <h1 class="text-3xl font-extrabold text-slate-900 mt-2">AI Pesantren Brochure Generator</h1>
+    </header>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Input Panel -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+            <div class="space-y-4">
                 <div>
-                    <label class="block font-medium text-gray-700 mb-1">Format Media:</label>
-                    <select name="formatBrosur" id="formatBrosur" class="w-full p-2.5 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500">
-                        <option>Poster Instagram (1:1)</option>
-                        <option>Cerita Instagram (9:16)</option>
-                        <option>Brosur Lipat A4</option>
-                    </select>
+                    <label class="block text-sm font-semibold mb-1">Nama Pesantren & Info Utama</label>
+                    <textarea id="infoTeks" rows="2" class="w-full p-3 border rounded-xl text-sm" placeholder="Contoh: Pondok Pesantren Al-Falah, Kediri. Pendaftaran 2025."></textarea>
                 </div>
                 <div>
-                    <label class="block font-medium text-gray-700 mb-1">Model Desain:</label>
-                    <select name="modelBrosur" id="modelBrosur" class="w-full p-2.5 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500">
-                        <option>Modern & Minimalis</option>
-                        <option>Islami Tradisional</option>
-                        <option>Elegant & Premium</option>
-                    </select>
+                    <label class="block text-sm font-semibold mb-1">Fasilitas & Keunggulan</label>
+                    <textarea id="catatanTambahan" rows="3" class="w-full p-3 border rounded-xl text-sm" placeholder="Misal: Tahfidz 30 Juz, Kamar mandi dalam, Lab Komputer..."></textarea>
                 </div>
+                
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-sm font-semibold mb-1">Format</label>
+                        <select id="formatBrosur" class="w-full p-2.5 border rounded-xl text-sm bg-white">
+                            <option value="1:1">Instagram Feed (1:1)</option>
+                            <option value="9:16">Instagram Story (9:16)</option>
+                            <option value="a4">Cetak A4 (Portrait)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold mb-1">Jumlah Slide</label>
+                        <select id="jumlahGambar" class="w-full p-2.5 border rounded-xl text-sm bg-white">
+                            <option value="3">3 Slide</option>
+                            <option value="4">4 Slide</option>
+                            <option value="5" selected>5 Slide</option>
+                            <option value="6">6 Slide</option>
+                        </select>
+                    </div>
+                </div>
+
                 <div>
-                    <label class="block font-medium text-gray-700 mb-1">Maksimal Gambar:</label>
-                    <select name="jumlahGambar" id="jumlahGambar" class="w-full p-2.5 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500">
-                        <option value="1">1 Gambar</option>
-                        <option value="2">2 Gambar</option>
-                        <option value="3">3 Gambar</option>
-                        <option value="4">4 Gambar</option>
+                    <label class="block text-sm font-semibold mb-1">Tema Warna</label>
+                    <select id="modelBrosur" class="w-full p-2.5 border rounded-xl text-sm bg-white">
+                        <option value="Tradisional Islami (Mewah/Gold)">Tradisional Islami (Gold/Emerald)</option>
+                        <option value="Modern & Minimalis">Modern & Minimalis (Blue/White)</option>
+                        <option value="Ceria & Edukatif (Anak-anak)">Ceria & Edukatif (Pastel)</option>
                     </select>
                 </div>
+
+                <div>
+                    <label class="block text-sm font-semibold mb-1">Upload Foto Pondok (Min 1, Maks 6)</label>
+                    <input type="file" id="fotoInput" accept="image/*" multiple class="w-full text-sm">
+                </div>
+
+                <button id="btnGenerate" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl transition shadow-lg">
+                    Mulai Desain Otomatis ✨
+                </button>
             </div>
-
-            <div>
-                <label class="block font-medium text-gray-700 mb-1">Gaya Visual:</label>
-                <select name="gayaVisual" id="gayaVisual" class="w-full p-2.5 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500">
-                    <option value="asli">Nuansa Islami Asli (Hijau & Emas)</option>
-                    <option value="bright">Cerah & Dinamis</option>
-                </select>
-            </div>
-
-            <div>
-                <label class="block font-medium text-gray-700 mb-1">Unggah Foto Pendukung:</label>
-                <input type="file" id="inputFoto" multiple accept="image/*" class="w-full p-2 border border-gray-200 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
-            </div>
-
-            <!-- Input tersembunyi untuk mengirimkan kumpulan string base64 gambar -->
-            <input type="hidden" name="listFotoBase64" id="listFotoBase64">
-
-            <button type="submit" id="btnGenerate" class="w-full py-3 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-lg shadow transition duration-200 cursor-pointer text-center">
-                Mulai Rancang Brosur dengan AI
-            </button>
-        </form>
-
-        <!-- LOADING AREA -->
-        <div id="loading" class="hidden text-center my-6">
-            <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-700 mx-auto"></div>
-            <p class="text-emerald-700 font-medium mt-2">AI sedang menganalisis data & menyusun struktur brosur...</p>
         </div>
 
-        <!-- AREA HASIL GENERATE BROSUR -->
-        <div id="canvasBrosur" class="mt-8 border border-gray-200 rounded-xl overflow-hidden bg-white shadow-inner"></div>
-
-        <!-- AREA TOMBOL UNDUH -->
-        <div id="downloadArea" class="hidden text-center mt-6">
-            <button id="btnDownload" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow transition cursor-pointer">
-                Unduh Hasil Brosur (.PNG)
+        <!-- Preview Panel -->
+        <div class="flex flex-col gap-4">
+            <h2 class="text-xl font-bold">Pratinjau Hasil</h2>
+            <div class="preview-container">
+                <div id="canvasBrosur" class="ratio-1-1">
+                    <div class="instagram-slide p-10 text-center flex items-center justify-center text-slate-400 border">
+                        Desain akan muncul di sini...
+                    </div>
+                </div>
+            </div>
+            <button id="btnDownload" class="hidden w-full bg-slate-900 text-white py-3 rounded-xl font-bold hover:bg-slate-800 transition">
+                📥 Download Semua Slide (.PNG)
             </button>
         </div>
     </div>
+</div>
 
-    <!-- INILAH KUNCI UTAMANYA: IFRAME TERSEMBUNYI UNTUK MENERIMA DATA BALIKAN BACKEND -->
-    <iframe name="target_frame" id="target_frame" class="hidden"></iframe>
+<script>
+    // GANTI INI DENGAN URL WEB APP ANDA
+    const BACKEND_URL = "https://script.google.com/macros/s/AKfycbwiLTj8sh6t9Zc6Znh1sdH_Y6u9TjOvMbo20jSRuhMRFOavsyHgkMnJr92ZTE_qEgJa/exec"; 
 
-    <script>
-        // MASUKKAN URL DEPLOYMENT APPS SCRIPT ANDA DI SINI
-        const BACKEND_URL = "https://script.google.com/macros/s/AKfycbwiLTj8sh6t9Zc6Znh1sdH_Y6u9TjOvMbo20jSRuhMRFOavsyHgkMnJr92ZTE_qEgJa/exec";
+    let listFotoBase64 = [];
 
-        const form = document.getElementById('formBrosur');
-        form.action = BACKEND_URL;
+    document.getElementById('fotoInput').addEventListener('change', async function(e) {
+        listFotoBase64 = [];
+        const files = e.target.files;
+        for (let file of files) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const base64 = event.target.result.split(',')[1];
+                listFotoBase64.push(base64);
+            };
+            reader.readAsDataURL(file);
+        }
+    });
 
-        let arrayFotoBase64 = [];
+    document.getElementById('btnGenerate').addEventListener('click', async () => {
+        const infoTeks = document.getElementById('infoTeks').value;
+        if (!infoTeks || listFotoBase64.length === 0) {
+            alert("Harap isi Info Utama dan unggah foto!");
+            return;
+        }
 
-        // Membaca file gambar lokal dan mengubahnya ke string Base64 sebelum form dikirim
-        document.getElementById('inputFoto').addEventListener('change', function(e) {
-            arrayFotoBase64 = [];
-            const files = e.target.files;
-            
-            for(let i=0; i<files.length; i++) {
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    arrayFotoBase64.push(event.target.result);
-                    document.getElementById('listFotoBase64').value = JSON.stringify(arrayFotoBase64);
-                };
-                reader.readAsDataURL(files[i]);
-            }
-        });
+        const format = document.getElementById('formatBrosur').value;
+        const canvas = document.getElementById('canvasBrosur');
+        canvas.className = "ratio-" + format;
 
-        // Event saat tombol submit ditekan
-        form.addEventListener('submit', () => {
-            document.getElementById('loading').classList.remove('hidden');
-            document.getElementById('canvasBrosur').innerHTML = '';
-            document.getElementById('downloadArea').classList.add('hidden');
-            document.getElementById('btnGenerate').disabled = true;
-        });
+        document.getElementById('loading').classList.remove('hidden');
+        document.getElementById('btnDownload').classList.add('hidden');
 
-        // MENDENGARKAN DATA DARI IFRAME (Menerima respon sukses dari Google Apps Script tanpa hambatan CORS)
-        window.addEventListener('message', function(event) {
-            document.getElementById('loading').classList.add('hidden');
-            document.getElementById('btnGenerate').disabled = false;
-            
-            const data = event.data;
-            if (data && typeof data === 'object') {
-                if (data.success) {
-                    document.getElementById('canvasBrosur').innerHTML = data.html;
-                    document.getElementById('downloadArea').classList.remove('hidden');
-                } else {
-                    alert("Gagal merancang brosur: " + data.error);
-                }
-            }
-        });
+        try {
+            const formData = new URLSearchParams();
+            formData.append('infoTeks', infoTeks);
+            formData.append('catatanTambahan', document.getElementById('catatanTambahan').value);
+            formData.append('formatBrosur', format);
+            formData.append('jumlahGambar', document.getElementById('jumlahGambar').value);
+            formData.append('modelBrosur', document.getElementById('modelBrosur').value);
+            formData.append('listFotoBase64', JSON.stringify(listFotoBase64));
 
-        // Fungsi mengunduh area brosur menjadi file gambar utuh menggunakan html2canvas
-        document.getElementById('btnDownload').addEventListener('click', () => {
-            const areaBrosur = document.getElementById('canvasBrosur');
-            html2canvas(areaBrosur, { useCORS: true, scale: 2 }).then(canvas => {
-                const link = document.createElement('a');
-                link.download = 'Brosur-PPMUY-' + Date.now() + '.png';
-                link.href = canvas.toDataURL('image/png');
-                link.click();
+            const response = await fetch(BACKEND_URL, {
+                method: 'POST',
+                body: formData
             });
-        });
-    </script>
+
+            const data = await response.json();
+            if (data.success) {
+                canvas.innerHTML = data.html;
+                document.getElementById('btnDownload').classList.remove('hidden');
+            } else {
+                alert("Kesalahan: " + data.error);
+            }
+        } catch (err) {
+            alert("Koneksi gagal! Pastikan BACKEND_URL benar.");
+        } finally {
+            document.getElementById('loading').classList.add('hidden');
+        }
+    });
+
+    async function downloadBrosur() {
+        const slides = document.querySelectorAll('.instagram-slide');
+        for (let i = 0; i < slides.length; i++) {
+            const canvas = await html2canvas(slides[i], { scale: 2, useCORS: true });
+            const link = document.createElement('a');
+            link.download = `slide-${i+1}.png`;
+            link.href = canvas.toDataURL();
+            link.click();
+            await new Promise(r => setTimeout(r, 500));
+        }
+    }
+    document.getElementById('btnDownload').onclick = downloadBrosur;
+</script>
 </body>
 </html>
