@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Pesantren Premium Studio - Light Edition</title>
+    <title>AI Pesantren Premium Studio - Perfection Edition</title>
     <script src="https://cdn.tailwindcss.com/3.4.15"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
@@ -15,17 +15,16 @@
             color: #0f172a; 
         }
             
-        /* DIMENSI DESAIN ASLI (Tetap dipertahankan untuk kebutuhan download kualitas tinggi) */
+        /* DIMENSI DESAIN ASLI */
         .ratio-square .instagram-slide { width: 1080px !important; height: 1080px !important; }
         .ratio-story .instagram-slide { width: 1080px !important; height: 1920px !important; }
         .ratio-a4 .instagram-slide { width: 1240px !important; height: 1754px !important; }
 
-        /* SKALA PREVIEW & PENYESUAIAN TINGGI CONTAINER AGAR TIDAK ADA BLANK SPACE DI BAWAH */
+        /* SKALA VISUAL PREVIEW SCREEN */
         .ratio-square { transform: scale(0.38); transform-origin: top center; height: 410px; }
         .ratio-story { transform: scale(0.22); transform-origin: top center; height: 423px; }
         .ratio-a4 { transform: scale(0.24); transform-origin: top center; height: 422px; }
  
-        /* PERBAIKAN UTAMA: Mengubah susunan ke bawah (flex-direction: column) dan menghapus overflow-x */
         #canvasOuter {
             width: 100%;
             padding: 20px;
@@ -45,7 +44,6 @@
             width: 100%;
         }
 
-        /* Form Card */
         .form-card { 
             background: white; 
             border: 1px solid #e2e8f0; 
@@ -75,12 +73,12 @@
 <!-- Loading UI -->
 <div id="loading" class="hidden fixed inset-0 bg-slate-900/60 z-[100] flex flex-col items-center justify-center backdrop-blur-md">
     <div class="w-16 h-16 border-4 border-emerald-400 border-t-transparent rounded-full animate-spin mb-4"></div>
-    <p id="loadingText" class="text-sm font-black tracking-widest uppercase text-white animate-pulse">AI Sedang Merancang Mahakarya...</p>
+    <p id="loadingText" class="text-sm font-black tracking-widest uppercase text-white animate-pulse">Memproses Sinkronisasi Gambar...</p>
 </div>
  
 <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-10">
     
-    <!-- PANEL KONTROL (KIRI) -->
+    <!-- PANEL KONTROL -->
     <div class="lg:col-span-5 form-card p-8 rounded-[2.5rem] space-y-6 h-fit">
         <div class="flex justify-between items-center border-b border-slate-100 pb-5">
             <div>
@@ -131,7 +129,6 @@
                 </div>
             </div>
  
-            <!-- AREA UPLOAD FOTO -->
             <div class="p-6 bg-slate-50 rounded-[2rem] border-2 border-dashed border-slate-300 flex flex-col items-center gap-3">
                 <input type="file" id="fotoInput" multiple accept="image/*" class="hidden">
                 <label for="fotoInput" class="bg-emerald-600 text-white px-8 py-3 rounded-full text-[10px] font-black cursor-pointer hover:bg-emerald-700 transition shadow-md">UPLOAD FILE FOTO</label>
@@ -150,17 +147,16 @@
         </div>
     </div>
  
-    <!-- PANEL PREVIEW (KANAN) -->
+    <!-- PANEL PREVIEW -->
     <div class="lg:col-span-7 flex flex-col items-center">
         <div class="w-full flex justify-between items-end mb-4 px-2">
             <h2 class="text-xs font-black tracking-[0.2em] text-slate-400 uppercase">Live Slide Preview (Urutan Kebawah)</h2>
             <div class="h-2 w-2 bg-emerald-500 rounded-full animate-ping"></div>
         </div>
  
-        <!-- Tempat Preview Utama Vertical -->
         <div id="canvasOuter" class="bg-slate-200 border border-slate-300 rounded-[2rem] shadow-inner">
             <div class="w-full text-center text-slate-400 my-auto text-xs font-bold uppercase tracking-wider py-20">
-                Belum Ada Desain Generated.<br><span class="text-[10px] text-slate-400 font-normal">Silakan masukkan Judul, Materi, Foto lalu klik Mulai Desain.</span>
+                Belum Ada Desain Generated.
             </div>
         </div>
  
@@ -173,7 +169,6 @@
 <script>
     const BACKEND_URL = "https://script.google.com/macros/s/AKfycbwiLTj8sh6t9Zc6Znh1sdH_Y6u9TjOvMbo20jSRuhMRFOavsyHgkMnJr92ZTE_qEgJa/exec";
  
-    // Dropdown Slide 1-10
     const selectSlide = document.getElementById('jumlahGambar');
     for(let i=1; i<=10; i++) {
         let opt = document.createElement('option');
@@ -220,7 +215,6 @@
             if (item.type.indexOf("image") !== -1) {
                 listFotoBase64.push(await compressImage(item.getAsFile()));
                 updateCounter();
-                showToast("📸 Foto Berhasil di-Paste!");
             }
         }
     });
@@ -237,7 +231,7 @@
         const materi = document.getElementById('catatanTambahan').value;
         if (!info || !materi) return alert("Harap isi Nama/Judul dan Materi terlebih dahulu!");
  
-        setLoading(true, "AI SEDANG MERANCANG MATERI & DESAIN (ESTIMASI 10 DETIK)...");
+        setLoading(true, "AI SEDANG MERANCANG DESAIN PREMIUM...");
         const format = document.getElementById('formatBrosur').value;
  
         try {
@@ -263,7 +257,7 @@
                 alert("Gagal memproses data: " + data.error);
             }
         } catch (e) {
-            alert("Terjadi Error! Pastikan URL Web App sudah di-deploy dengan benar sebagai 'Anyone'.");
+            alert("Terjadi Error pada Web App.");
         }
         setLoading(false);
     };
@@ -271,7 +265,6 @@
     function renderCarouselPreview(htmlString, formatClass) {
         const outer = document.getElementById('canvasOuter');
         outer.innerHTML = ""; 
-        
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = htmlString;
         const slides = tempDiv.querySelectorAll('.instagram-slide');
@@ -279,31 +272,47 @@
         slides.forEach((slideHtml) => {
             const slideContainer = document.createElement('div');
             slideContainer.className = "slide-container";
-            
             const ratioWrapper = document.createElement('div');
             ratioWrapper.className = formatClass;
-            
             ratioWrapper.appendChild(slideHtml);
             slideContainer.appendChild(ratioWrapper);
             outer.appendChild(slideContainer);
         });
     }
  
+    /* SOLUSI FIX DOWNLOAD SINKRON SAMA PREVIEW */
     document.getElementById('btnDownload').onclick = async function() {
         const slides = document.querySelectorAll('#canvasOuter .instagram-slide');
         if(slides.length === 0) return;
         
-        setLoading(true, "GENERATING FILE PNG KUALITAS TINGGI...");
+        setLoading(true, "MENSINKRONISASI & GENERATING PNG...");
+        const formatBrosur = document.getElementById('formatBrosur').value;
+
         for (let i = 0; i < slides.length; i++) {
-            const canvas = await html2canvas(slides[i], { scale: 2, useCORS: true, logging: false });
+            const slide = slides[i];
+            const wrapper = slide.parentElement; 
+
+            // Lepas skala agar ukurannya kembali 1080px murni (mencegah tumpang tindih)
+            wrapper.classList.remove(formatBrosur);
+            await new Promise(r => setTimeout(r, 150));
+
+            const canvas = await html2canvas(slide, { 
+                scale: 2, 
+                useCORS: true, 
+                logging: false,
+                backgroundColor: null
+            });
+
+            // Kembalikan skala agar tampilan web rapi lagi
+            wrapper.classList.add(formatBrosur);
+
             const link = document.createElement('a');
             link.download = `Slide-${i+1}.png`;
             link.href = canvas.toDataURL('image/png');
             link.click();
-            await new Promise(r => setTimeout(r, 400));
+            await new Promise(r => setTimeout(r, 300));
         }
         setLoading(false);
-        showToast("✅ Semua slide sukses diunduh!");
     };
  
     document.getElementById('btnSave').onclick = async () => {
@@ -316,7 +325,6 @@
         if (data.success) {
             document.getElementById('resultId').classList.remove('hidden');
             document.getElementById('displayId').innerText = data.projectId;
-            showToast("☁️ Tersimpan ke Spreadsheet!");
         }
         setLoading(false);
     };
@@ -324,7 +332,7 @@
     document.getElementById('btnLoad').onclick = async () => {
         const id = document.getElementById('loadId').value;
         if(!id) return;
-        setLoading(true, "MEMUAT DARI CLOUD...");
+        setLoading(true, "MEMUAT DATA...");
         const res = await fetch(BACKEND_URL, { method: 'POST', body: JSON.stringify({ action: 'load', projectId: id }) });
         const data = await res.json();
         if (data.success) {
@@ -332,7 +340,6 @@
             const format = document.getElementById('formatBrosur').value;
             renderCarouselPreview(data.html, format);
             document.getElementById('btnDownload').classList.remove('hidden');
-            showToast("📂 Project Berhasil Dimuat!");
         } else {
             alert("ID Tidak Ditemukan.");
         }
@@ -342,14 +349,6 @@
     function setLoading(s, t) { 
         document.getElementById('loading').classList.toggle('hidden', !s); 
         document.getElementById('loadingText').innerText = t; 
-    }
- 
-    function showToast(m) {
-        const t = document.createElement('div');
-        t.className = "fixed bottom-10 left-1/2 -translate-x-1/2 bg-slate-900 text-emerald-400 px-6 py-3 rounded-full text-xs font-black z-[200] border border-emerald-500/30 shadow-2xl";
-        t.innerText = m; 
-        document.body.appendChild(t);
-        setTimeout(() => t.remove(), 3000);
     }
 </script>
 </body>
