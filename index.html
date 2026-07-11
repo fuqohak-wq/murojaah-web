@@ -83,7 +83,7 @@
         <div class="flex justify-between items-center border-b border-slate-100 pb-5">
             <div>
                 <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Studio AI <span class="text-emerald-600">Premium</span></h1>
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Pesantren Edition v2</p>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Pesantren Edition v3</p>
             </div>
             <div class="flex gap-2">
                 <input type="text" id="loadId" placeholder="ID" class="w-16 p-2 rounded-xl text-center text-xs font-bold shadow-sm">
@@ -98,19 +98,31 @@
             </div>
  
             <div>
-                <label class="text-[10px] font-black uppercase text-slate-400 mb-1 block ml-1">Materi Utama & Ayat/Hadits (Teks Arab)</label>
-                <textarea id="catatanTambahan" rows="5" class="w-full p-4 rounded-2xl text-sm" placeholder="Tempel poin materi atau ayat arab di sini... AI akan mengatur pembagian slidenya secara otomatis."></textarea>
+                <label class="text-[10px] font-black uppercase text-slate-400 mb-1 block ml-1">Materi Utama & Catatan Kajian</label>
+                <textarea id="catatanTambahan" rows="5" class="w-full p-4 rounded-2xl text-sm" placeholder="Tempel bahan tulisan, ayat, atau poin penting dakwah di sini..."></textarea>
             </div>
  
-            <div class="grid grid-cols-3 gap-3">
+            <div class="grid grid-cols-2 gap-3">
                 <div>
-                    <label class="text-[10px] font-black uppercase text-slate-400 mb-1 block">Format</label>
+                    <label class="text-[10px] font-black uppercase text-slate-400 mb-1 block">Format Ukuran</label>
                     <select id="formatBrosur" class="w-full p-3 rounded-xl text-[10px] font-bold">
                         <option value="ratio-square">FEED 1:1</option>
                         <option value="ratio-story">STORY 9:16</option>
                         <option value="ratio-a4">CETAK A4</option>
                     </select>
                 </div>
+                <div>
+                    <label class="text-[10px] font-black uppercase text-slate-400 mb-1 block">Kombinasi Bahasa (Baru)</label>
+                    <select id="opsiBahasa" class="w-full p-3 rounded-xl text-[10px] font-bold border-emerald-500">
+                        <option value="id-only">Indonesia Saja</option>
+                        <option value="ar-id">Arab - Indonesia</option>
+                        <option value="id-en">Indonesia - Inggris</option>
+                        <option value="ar-en-id">Arab - Inggris - Indonesia</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
                 <div>
                     <label class="text-[10px] font-black uppercase text-slate-400 mb-1 block">Jumlah Slide</label>
                     <select id="jumlahGambar" class="w-full p-3 rounded-xl text-[10px] font-bold">
@@ -233,6 +245,7 @@
  
         setLoading(true, "AI SEDANG MERANCANG DESAIN PREMIUM...");
         const format = document.getElementById('formatBrosur').value;
+        const bahasa = document.getElementById('opsiBahasa').value;
  
         try {
             const res = await fetch(BACKEND_URL, {
@@ -242,6 +255,7 @@
                     infoTeks: info,
                     catatanTambahan: materi,
                     formatBrosur: format,
+                    opsiBahasa: bahasa, // Mengirim pilihan bahasa ke backend
                     jumlahGambar: document.getElementById('jumlahGambar').value,
                     modelBrosur: document.getElementById('modelBrosur').value,
                     listFotoBase64: listFotoBase64
@@ -280,7 +294,6 @@
         });
     }
  
-    /* SOLUSI FIX DOWNLOAD SINKRON SAMA PREVIEW */
     document.getElementById('btnDownload').onclick = async function() {
         const slides = document.querySelectorAll('#canvasOuter .instagram-slide');
         if(slides.length === 0) return;
@@ -292,7 +305,6 @@
             const slide = slides[i];
             const wrapper = slide.parentElement; 
 
-            // Lepas skala agar ukurannya kembali 1080px murni (mencegah tumpang tindih)
             wrapper.classList.remove(formatBrosur);
             await new Promise(r => setTimeout(r, 150));
 
@@ -303,7 +315,6 @@
                 backgroundColor: null
             });
 
-            // Kembalikan skala agar tampilan web rapi lagi
             wrapper.classList.add(formatBrosur);
 
             const link = document.createElement('a');
