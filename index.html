@@ -238,13 +238,21 @@
             document.getElementById('canvasBrosur').innerHTML = "";
             document.getElementById('downloadArea').classList.add('hidden');
  
-            try {
-                // Mengirimkan request POST murni dengan mode CORS aman
+try {
+                // Mengubah payload menjadi URLSearchParams agar browser menganggapnya sebagai form standar (Bebas kendala CORS)
+                const params = new URLSearchParams();
+                params.append('infoTeks', infoTeks);
+                params.append('catatanTambahan', catatanTambahan);
+                params.append('formatBrosur', formatBrosur);
+                params.append('jumlahGambar', jumlahGambar);
+                params.append('modelBrosur', modelBrosur);
+                params.append('gayaVisual', gayaVisual);
+                params.append('listFotoBase64', JSON.stringify(listFotoBase64));
+
                 const response = await fetch(BACKEND_URL, {
                     method: 'POST',
-                    mode: 'cors',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ infoTeks, catatanTambahan, formatBrosur, jumlahGambar, modelBrosur, gayaVisual, listFotoBase64 })
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: params.toString()
                 });
                 
                 const data = await response.json();
@@ -257,7 +265,7 @@
                 }
             } catch (error) {
                 console.error(error);
-                alert("Terjadi masalah komunikasi data dengan AI. Pastikan Apps Script Anda sudah di-Deploy ulang dengan benar sebagai 'Anyone'.");
+                alert("Koneksi gagal. Pastikan tautan BACKEND_URL Anda berakhiran '/exec' dan sudah dideploy ulang dengan benar.");
             } finally {
                 document.getElementById('loading').classList.add('hidden');
             }
