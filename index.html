@@ -24,7 +24,7 @@
 
     <header class="bg-emerald-600 text-white shadow-md py-6 px-4 mb-8 text-center">
         <h1 class="text-2xl md:text-3xl font-bold">🕌 Asisten Murojaah AI</h1>
-        <p class="text-sm mt-2 opacity-90">Sistem Murojaah: Unggah file rekaman audio hafalan Anda untuk dianalisis oleh AI.</p>
+        <p class="text-sm mt-2 opacity-90">Sistem Murojaah: Kirim file rekaman audio hafalan Anda untuk dianalisis oleh AI secara otomatis.</p>
     </header>
 
     <main class="max-w-4xl mx-auto px-4 pb-12">
@@ -45,7 +45,7 @@
             
             <div>
                 <h2 class="text-lg font-bold text-emerald-800 flex items-center gap-2">🎵 Upload File Rekaman Eksternal</h2>
-                <p class="text-xs text-gray-500 mt-1">Rekam murojaah Anda menggunakan aplikasi perekam suara ponsel, lalu unggah filenya di bawah ini.</p>
+                <p class="text-xs text-gray-500 mt-1">Gunakan perekam bawaan ponsel agar ukuran file efisien, lalu unggah berkasnya di bawah ini.</p>
             </div>
             
             <form id="uploadForm" class="space-y-4">
@@ -120,7 +120,7 @@
                 
                 <div class="pt-2 border-t border-emerald-100 flex flex-col sm:flex-row gap-3 items-center justify-between">
                     <p class="text-xs text-emerald-800">
-                        💡 Kirim ulang rekaman jika terjadi kesalahan pengiriman sebelumnya.
+                        💡 Kirim ulang jika terjadi gangguan sinyal pada pengiriman sebelumnya.
                     </p>
                     <button id="resendBtn" class="w-full sm:w-auto bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 px-4 rounded-xl shadow transition flex items-center justify-center gap-2 text-sm">
                         🔄 Kirim Ulang Rekaman Ini
@@ -355,7 +355,7 @@
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-2">
                                     <!-- Kolom Salah / Ragu -->
                                     <div class="bg-rose-50/40 border border-rose-100 p-5 rounded-2xl flex flex-col justify-between">
-                                        <span class="text-[10px] font-bold text-rose-500 uppercase tracking-widest block mb-3">❌ Lafaz Salah / Ragu (Satu Ayat Utuh)</span>
+                                        <span class="text-[10px] font-bold text-rose-500 uppercase tracking-widest block mb-3">❌ Lafaz Salah / Ragu (Potongan)</span>
                                         <p class="arabic-text text-3xl text-right text-gray-700 leading-loose select-all">${salah}</p>
                                     </div>
                                     <!-- Kolom Seharusnya -->
@@ -402,7 +402,7 @@
         if (detailKoreksiHTML) {
             outputHTML += `
                 <div class="space-y-4">
-                    <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider">⚠️ Daftar Koreksi & Keraguan Detail (Satu Ayat Utuh):</h4>
+                    <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider">⚠️ Daftar Koreksi & Keraguan Detail:</h4>
                     <div class="bg-white border border-gray-100 p-6 rounded-2xl shadow-sm space-y-4">
                         ${detailKoreksiHTML}
                     </div>
@@ -502,9 +502,16 @@
                 audioPlaybackBox.classList.add('hidden');
                 audioPlayer.src = "";
                 
-                let options = { mimeType: 'audio/webm;codecs=opus' };
+                // MENGGUNAKAN KOMPRESI SANGAT RENDAH (24kbps) UNTUK AUDIO BERMUTU TINGGI TAPI FILE KECIL
+                let options = { 
+                    mimeType: 'audio/webm;codecs=opus',
+                    audioBitsPerSecond: 24000
+                };
                 if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-                    options = { mimeType: 'audio/mp4' }; 
+                    options = { 
+                        mimeType: 'audio/mp4',
+                        audioBitsPerSecond: 24000
+                    }; 
                 }
                 
                 mediaRecorder = new MediaRecorder(stream, options);
@@ -626,7 +633,6 @@
         timerLabel.textContent = `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     }
 
-    // PENGIRIMAN AUDIO MENGGUNAKAN XMLHTTPREQUEST UNTUK DETEKSI % PROGRESS
     async function kirimBlobAudio(blob) {
         const ext = blob.type.includes('mp4') ? 'mp4' : 'mp3';
         const fileDibuat = new File([blob], `rekaman_langsung.${ext}`, { type: blob.type });
@@ -643,7 +649,6 @@
             const xhr = new XMLHttpRequest();
             xhr.open('POST', BACKEND_URL, true);
             
-            // Event listener untuk update Progress Bar
             xhr.upload.addEventListener('progress', (e) => {
                 if (e.lengthComputable) {
                     const percentComplete = Math.round((e.loaded / e.total) * 100);
