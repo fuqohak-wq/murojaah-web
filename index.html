@@ -71,7 +71,7 @@
 
 <script>
     // Konfigurasi endpoint backend FastAPI Anda
-    const BACKEND_URL = "http://localhost:7860/upload"; 
+    const BACKEND_URL = window.location.origin + "/upload";
 
     const audioInput = document.getElementById('audioInput');
     const fileNameDisplay = document.getElementById('fileName');
