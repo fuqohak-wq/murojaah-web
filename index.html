@@ -3,245 +3,596 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Tashih Murojaah Studio</title>
+    <title>AI Pesantren Premium Studio - Perfection Edition</title>
     <script src="https://cdn.tailwindcss.com/3.4.15"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cinzel:wght@700&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+        
         body { 
             font-family: 'Plus Jakarta Sans', sans-serif; 
             background-color: #f8fafc; 
+            color: #0f172a; 
         }
-        .font-arabic { 
-            font-family: 'Amiri', serif !important; 
-            direction: rtl;
+            
+        .ratio-square .instagram-slide { width: 1080px !important; height: 1080px !important; }
+        .ratio-story .instagram-slide { width: 1080px !important; height: 1920px !important; }
+        .ratio-a4 .instagram-slide { width: 1240px !important; height: 1754px !important; }
+
+        .ratio-square { transform: scale(0.38); transform-origin: top center; height: 410px; }
+        .ratio-story { transform: scale(0.22); transform-origin: top center; height: 423px; }
+        .ratio-a4 { transform: scale(0.24); transform-origin: top center; height: 422px; }
+ 
+        #canvasOuter {
+            width: 100%;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+            justify-content: flex-start;
+            align-items: center;
+            min-height: 500px;
         }
+
+        .slide-container {
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+
+        .form-card { 
+            background: white; 
+            border: 1px solid #e2e8f0; 
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05); 
+        }
+ 
+        input, textarea, select { 
+            background: #f8fafc !important; 
+            border: 1px solid #cbd5e1 !important; 
+            color: #0f172a !important; 
+            outline: none; 
+            transition: all 0.2s;
+        }
+ 
+        input:focus, textarea:focus, select:focus { 
+            border-color: #059669 !important; 
+            background: white !important;
+            box-shadow: 0 0 0 4px rgba(5, 150, 105, 0.1);
+        }
+ 
+        .font-arabic { font-family: 'Amiri', serif !important; direction: rtl; text-align: right; }
+        .font-heading { font-family: 'Cinzel', serif !important; }
     </style>
 </head>
-<body class="p-4 md:p-8 lg:p-12 text-slate-900">
-
-<div class="max-w-4xl mx-auto space-y-8">
-    <!-- Header -->
-    <div class="text-center space-y-2">
-        <h1 class="text-3xl font-extrabold text-emerald-700 tracking-tight">AI Tashih Murojaah Studio</h1>
-        <p class="text-sm text-slate-500 font-medium">Uji akurasi hafalan Al-Qur'an Anda secara real-time menggunakan kecerdasan buatan.</p>
-    </div>
-
-    <!-- Main Card -->
-    <div class="bg-white rounded-[2rem] border border-slate-200 p-6 md:p-10 shadow-sm space-y-6">
-        <div>
-            <label class="text-[11px] font-black uppercase text-slate-400 mb-2 block tracking-wider">Petunjuk Nama Surah (Opsional)</label>
-            <input type="text" id="surahHint" class="w-full p-4 rounded-xl text-sm font-semibold bg-slate-50 border border-slate-300 focus:border-emerald-500 focus:bg-white outline-none transition" placeholder="Contoh: Al-Baqarah, Juz 30, atau An-Naba">
-        </div>
-
-        <!-- Area Drop/Upload File -->
-        <div class="p-8 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center gap-3 relative">
-            <input type="file" id="audioInput" accept="audio/*" class="hidden">
-            <label for="audioInput" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-3 rounded-xl text-sm cursor-pointer transition shadow-md">
-                Pilih File Audio (MP3/WAV/M4A)
-            </label>
-            <p id="fileName" class="text-xs text-slate-500 font-medium mt-1">Belum ada file yang dipilih</p>
-        </div>
-
-        <!-- Progress Bar (Hidden by Default) -->
-        <div id="progressContainer" class="hidden space-y-2">
-            <div class="flex justify-between text-xs font-bold text-slate-500">
-                <span id="progressStatus">Mengunggah file ke server...</span>
-                <span id="progressPercentage">0%</span>
-            </div>
-            <div class="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
-                <div id="progressBar" class="bg-emerald-500 h-full w-0 transition-all duration-150"></div>
-            </div>
-        </div>
-
-        <!-- Tombol Kirim -->
-        <button id="btnSubmit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 rounded-xl transition shadow-lg text-sm tracking-wider uppercase">
-            Mulai Tashih Hafalan 🎙️
-        </button>
-    </div>
-
-    <!-- Kontainer Hasil Analisis -->
-    <div id="resultContainer" class="hidden bg-white rounded-[2rem] border border-slate-200 p-6 md:p-10 shadow-sm space-y-6">
-        <h2 class="text-xl font-bold text-emerald-800 border-b pb-4">Hasil Tashih Hafalan</h2>
+<body class="p-4 md:p-8 lg:p-12 bg-slate-50">
+ 
+<div id="loading" class="hidden fixed inset-0 bg-slate-900/60 z-[100] flex flex-col items-center justify-center backdrop-blur-md">
+    <div class="w-16 h-16 border-4 border-emerald-400 border-t-transparent rounded-full animate-spin mb-4"></div>
+    <p id="loadingText" class="text-sm font-black tracking-widest uppercase text-white animate-pulse">Memproses...</p>
+</div>
+ 
+<div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-10">
+    
+    <!-- PANEL KONTROL KIRI -->
+    <div class="lg:col-span-5 space-y-6">
         
-        <div id="formattedResult" class="space-y-6">
-            <!-- Hasil parsing sistem akan disisipkan di sini -->
+        <!-- MODUL BARU: KOREKSI AUDIO MUROJAAH -->
+        <div class="form-card p-6 rounded-[2.5rem] border border-emerald-100 bg-gradient-to-br from-emerald-50/50 to-white space-y-4">
+            <div>
+                <h2 class="text-lg font-extrabold text-emerald-800">🎙️ Koreksi Hafalan Murojaah (Tashih)</h2>
+                <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Verifikasi AI Terhadap Mushaf Utsmani</p>
+            </div>
+            
+            <div class="space-y-3">
+                <div>
+                    <label class="text-[9px] font-black uppercase text-slate-400 block ml-1 mb-1">Acuan Surah (Opsional)</label>
+                    <input type="text" id="surahHint" class="w-full p-3 rounded-xl text-xs font-semibold" placeholder="Contoh: Al-Baqarah 1-10 atau Juz 30">
+                </div>
+                
+                <div>
+                    <label class="text-[9px] font-black uppercase text-slate-400 block ml-1 mb-1">Pilih File Rekaman (MP3/WAV/M4A)</label>
+                    <input type="file" id="audioFile" accept="audio/*" class="w-full p-3 rounded-xl text-xs bg-white file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-[10px] file:font-bold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
+                </div>
+
+                <!-- INDIKATOR PERSENTASE UPLOAD & STATUS -->
+                <div id="uploadProgressContainer" class="hidden space-y-1">
+                    <div class="flex justify-between text-[10px] font-bold text-slate-500">
+                        <span id="statusTeks">Mengunggah file...</span>
+                        <span id="persenTeks">0%</span>
+                    </div>
+                    <div class="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+                        <div id="progressBar" class="bg-emerald-500 h-2 rounded-full transition-all duration-150" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <button id="btnUploadAudio" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-black py-3 rounded-xl transition text-[10px] tracking-widest uppercase">
+                    PROSES & AUDIT HAFALAN 🚀
+                </button>
+            </div>
         </div>
+
+        <!-- PANEL STUDIO LAMA -->
+        <div class="form-card p-8 rounded-[2.5rem] space-y-6">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-5">
+                <div>
+                    <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Studio AI <span class="text-emerald-600">Premium</span></h1>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Pesantren Edition v3</p>
+                </div>
+                <div class="flex gap-2 w-48 justify-end">
+                    <select id="loadId" class="w-full p-2 rounded-xl text-[10px] font-bold shadow-sm border border-slate-300 bg-white">
+                        <option value="">Pilih Project...</option>
+                    </select>
+                    <button id="btnLoad" class="bg-slate-800 text-white px-3 py-2 rounded-xl text-[10px] font-bold hover:bg-black transition">LOAD</button>
+                </div>
+            </div>
+     
+            <div class="space-y-4">
+                <div>
+                    <label class="text-[10px] font-black uppercase text-slate-400 mb-1 block ml-1">Nama Pesantren / Judul Banner</label>
+                    <input type="text" id="infoTeks" class="w-full p-4 rounded-2xl text-sm font-semibold" placeholder="Contoh: Pondok Pesantren Miftahul Ulum">
+                </div>
+     
+                <div>
+                    <label class="text-[10px] font-black uppercase text-slate-400 mb-1 block ml-1">Materi Utama & Catatan Kajian</label>
+                    <textarea id="catatanTambahan" rows="4" class="w-full p-4 rounded-2xl text-sm" placeholder="Tempel bahan tulisan, ayat, atau poin penting dakwah di sini..."></textarea>
+                </div>
+     
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-[10px] font-black uppercase text-slate-400 mb-1 block">Format Ukuran</label>
+                        <select id="formatBrosur" class="w-full p-3 rounded-xl text-[10px] font-bold">
+                            <option value="ratio-square">FEED 1:1</option>
+                            <option value="ratio-story">STORY 9:16</option>
+                            <option value="ratio-a4">CETAK A4</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-black uppercase text-slate-400 mb-1 block">Kombinasi Bahasa</label>
+                        <select id="opsiBahasa" class="w-full p-3 rounded-xl text-[10px] font-bold border-emerald-500">
+                            <option value="id-only">Indonesia Saja</option>
+                            <option value="ar-id">Arab - Indonesia</option>
+                            <option value="id-en">Indonesia - Inggris</option>
+                            <option value="ar-en-id">Arab - Inggris - Indonesia</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-[10px] font-black uppercase text-slate-400 mb-1 block">Jumlah Slide</label>
+                        <select id="jumlahGambar" class="w-full p-3 rounded-xl text-[10px] font-bold">
+                            <!-- Diisi via JS -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-black uppercase text-slate-400 mb-1 block">Tema Warna</label>
+                        <select id="modelBrosur" class="w-full p-3 rounded-xl text-[10px] font-bold">
+                            <option value="Emerald Gold">Emerald Luxury (Hijau Tua)</option>
+                            <option value="Black Gold">Midnight Premium (Hitam Mewah)</option>
+                            <option value="Royal Blue">Blue Ocean (Biru Safir)</option>
+                            <option value="Tradisional">Classic Cream (Krem Klasik)</option>
+                            <option value="Ceria">Warm Pastel (Kuning Ceria)</option>
+                        </select>
+                    </div>
+                </div>
+     
+                <div class="p-4 bg-slate-50 rounded-[2rem] border-2 border-dashed border-slate-300 flex flex-col items-center gap-2">
+                    <input type="file" id="fotoInput" multiple accept="image/*" class="hidden">
+                    <label for="fotoInput" class="bg-emerald-600 text-white px-6 py-2 rounded-full text-[10px] font-black cursor-pointer hover:bg-emerald-700 transition shadow-md">UPLOAD FILE FOTO</label>
+                    <p class="text-[9px] text-slate-400 font-bold uppercase">Atau Paste Screenshot langsung <span class="text-emerald-600">(Ctrl+V)</span></p>
+                    <div id="fotoCounter" class="bg-emerald-100 text-emerald-700 px-4 py-1 rounded-full text-[10px] font-black hidden">0 FOTO SIAP</div>
+                </div>
+     
+                <button id="btnGenerate" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-4 rounded-2xl transition shadow-xl shadow-emerald-100 active:scale-95 text-xs tracking-widest uppercase">
+                    MULAI DESAIN SEKARANG ✨
+                </button>
+            </div>
+     
+            <div id="saveArea" class="hidden p-6 bg-emerald-50 rounded-[2.5rem] border border-emerald-100 flex flex-col items-center gap-2">
+                <button id="btnSave" class="bg-emerald-600 text-white px-10 py-3 rounded-2xl text-[10px] font-black shadow-lg uppercase tracking-widest">SIMPAN KE CLOUD ☁️</button>
+                <div id="resultId" class="mt-2 text-xl font-black text-emerald-700 hidden tracking-[0.2em]">ID BARU: <span id="displayId" class="underline"></span></div>
+            </div>
+        </div>
+    </div>
+ 
+    <!-- PANEL HASIL & PREVIEW KANAN -->
+    <div class="lg:col-span-7 space-y-6">
+        
+        <!-- CONTAINER TAMPILAN EVALUASI AUDIO -->
+        <div id="hasilAudioCard" class="hidden form-card p-6 rounded-[2.5rem] border border-emerald-200 bg-white space-y-4">
+            <div class="border-b border-slate-100 pb-3 flex justify-between items-center">
+                <h3 class="text-sm font-bold uppercase text-emerald-800 tracking-wider">📝 Hasil Audit Tashih Al-Qur'an</h3>
+                <span class="bg-emerald-100 text-emerald-800 text-[9px] font-extrabold px-3 py-1 rounded-full">Selesai Dinilai</span>
+            </div>
+            
+            <div id="hasilAudioKonten" class="space-y-4 text-xs leading-relaxed text-slate-700">
+                <!-- Data hasil olah format Gemini dimasukkan di sini via JavaScript -->
+            </div>
+        </div>
+
+        <div class="w-full flex justify-between items-end mb-4 px-2">
+            <h2 class="text-xs font-black tracking-[0.2em] text-slate-400 uppercase">Live Slide Preview (Urutan Kebawah)</h2>
+            <div class="h-2 w-2 bg-emerald-500 rounded-full animate-ping"></div>
+        </div>
+ 
+        <div id="canvasOuter" class="bg-slate-200 border border-slate-300 rounded-[2rem] shadow-inner">
+            <div class="w-full text-center text-slate-400 my-auto text-xs font-bold uppercase tracking-wider py-20">
+                Belum Ada Desain Generated.
+            </div>
+        </div>
+ 
+        <button id="btnDownload" class="hidden mt-6 w-full bg-slate-900 text-white font-black py-5 rounded-[2rem] shadow-2xl hover:bg-black transition tracking-[0.4em] text-[11px] uppercase">
+            🚀 Download Semua Slide (High Quality PNG)
+        </button>
     </div>
 </div>
 
+<div id="hiddenRenderArea" style="position: absolute; top: -9999px; left: -9999px; width: 0; height: 0; overflow: hidden;"></div>
+ 
 <script>
-    // Konfigurasi endpoint backend FastAPI Anda
-    const BACKEND_URL = window.location.origin + "/upload";
-
-    const audioInput = document.getElementById('audioInput');
-    const fileNameDisplay = document.getElementById('fileName');
-    const btnSubmit = document.getElementById('btnSubmit');
-    const progressContainer = document.getElementById('progressContainer');
-    const progressBar = document.getElementById('progressBar');
-    const progressPercentage = document.getElementById('progressPercentage');
-    const progressStatus = document.getElementById('progressStatus');
-    const resultContainer = document.getElementById('resultContainer');
-    const formattedResult = document.getElementById('formattedResult');
-
-    audioInput.onchange = () => {
-        if (audioInput.files.length > 0) {
-            fileNameDisplay.innerText = audioInput.files[0].name;
-        } else {
-            fileNameDisplay.innerText = "Belum ada file yang dipilih";
+    // Sesuaikan URL Backend FastAPI (Hugging Face / server backend Anda)
+    const FASTAPI_URL = "https://YOUR_BACKEND_APP_URL.hf.space"; 
+    // Sesuaikan URL Google Apps Script Anda jika digunakan untuk banner studio
+    const BACKEND_URL = "https://script.google.com/macros/s/AKfycbwiLTj8sh6t9Zc6Znh1sdH_Y6u9TjOvMbo20jSRuhMRFOavsyHgkMnJr92ZTE_qEgJa/exec";
+ 
+    const selectSlide = document.getElementById('jumlahGambar');
+    for(let i=1; i<=10; i++) {
+        let opt = document.createElement('option');
+        opt.value = i;
+        opt.innerHTML = i + " SLIDE";
+        if(i===5) opt.selected = true;
+        selectSlide.appendChild(opt);
+    }
+ 
+    let listFotoBase64 = [];
+    let currentHtml = "";
+ 
+    function updateCounter() {
+        const c = document.getElementById('fotoCounter');
+        if (listFotoBase64.length > 0) {
+            c.innerText = listFotoBase64.length + " FOTO SIAP PROSES";
+            c.classList.remove('hidden');
         }
+    }
+ 
+    async function compressImage(file) {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (e) => {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const MAX = 800; 
+                    const scale = MAX / Math.max(img.width, img.height);
+                    canvas.width = img.width * scale; 
+                    canvas.height = img.height * scale;
+                    canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+                    resolve(canvas.toDataURL('image/jpeg', 0.75).split(',')[1]);
+                };
+            };
+        });
+    }
+ 
+    window.addEventListener('paste', async (e) => {
+        const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+        for (let item of items) {
+            if (item.type.indexOf("image") !== -1) {
+                listFotoBase64.push(await compressImage(item.getAsFile()));
+                updateCounter();
+            }
+        }
+    });
+ 
+    document.getElementById('fotoInput').onchange = async (e) => {
+        for (let file of e.target.files) {
+            listFotoBase64.push(await compressImage(file));
+        }
+        updateCounter();
     };
 
-    btnSubmit.onclick = () => {
-        const file = audioInput.files[0];
-        if (!file) {
-            alert("Silakan pilih file audio terlebih dahulu!");
-            return;
+    // PROSES UPLOAD AUDIO DENGAN PROGRESS BAR PERSENTASE
+    document.getElementById('btnUploadAudio').onclick = async () => {
+        const fileInput = document.getElementById('audioFile');
+        const surahHint = document.getElementById('surahHint').value;
+        
+        if (fileInput.files.length === 0) {
+            return alert("Silakan pilih file audio terlebih dahulu!");
         }
 
-        const surahHint = document.getElementById('surahHint').value;
+        const file = fileInput.files[0];
         const formData = new FormData();
         formData.append("file", file);
         if (surahHint) {
             formData.append("surah_hint", surahHint);
         }
 
-        // Tampilkan Indikator Progress
-        progressContainer.classList.remove('hidden');
-        resultContainer.classList.add('hidden');
-        btnSubmit.disabled = true;
-        btnSubmit.classList.add('opacity-50');
+        const progressContainer = document.getElementById('uploadProgressContainer');
+        const progressBar = document.getElementById('progressBar');
+        const persenTeks = document.getElementById('persenTeks');
+        const statusTeks = document.getElementById('statusTeks');
 
+        progressContainer.classList.remove('hidden');
         progressBar.style.width = '0%';
-        progressPercentage.innerText = '0%';
-        progressStatus.innerText = "Mengunggah berkas audio...";
+        persenTeks.innerText = '0%';
+        statusTeks.innerText = 'Mengunggah rekaman ke server...';
 
         const xhr = new XMLHttpRequest();
-        xhr.open("POST", BACKEND_URL, true);
-
-        // Memantau proses pengiriman data (upload progress)
-        xhr.upload.addEventListener("progress", (e) => {
+        
+        // Memantau proses upload file ke server
+        xhr.upload.addEventListener('progress', (e) => {
             if (e.lengthComputable) {
                 const percentComplete = Math.round((e.loaded / e.total) * 100);
                 progressBar.style.width = percentComplete + '%';
-                progressPercentage.innerText = percentComplete + '%';
-                if (percentComplete === 100) {
-                    progressStatus.innerText = "Audio terkirim! AI sedang menyimak hafalan Anda...";
-                    progressBar.classList.remove('bg-emerald-500');
-                    progressBar.classList.add('bg-blue-500');
+                persenTeks.innerText = percentComplete + '%';
+                if(percentComplete === 100) {
+                    statusTeks.innerText = "Selesai Mengunggah. Mengantre pemrosesan AI...";
                 }
             }
         });
 
-        xhr.onload = () => {
-            btnSubmit.disabled = false;
-            btnSubmit.classList.remove('opacity-50');
-            progressContainer.classList.add('hidden');
-
-            if (xhr.status === 200) {
+        xhr.addEventListener('load', () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
                 const response = JSON.parse(xhr.responseText);
                 if (response.status === "success") {
-                    displayResult(response.result);
+                    // Masuk ke fase pemantauan analisis (polling)
+                    lacakStatusAnalisis(response.job_id);
                 } else {
-                    alert("Error dari AI: " + response.message);
+                    alert("Gagal memproses file di server backend.");
                 }
             } else {
-                alert("Gagal menghubungi server backend.");
+                alert("Koneksi gagal atau server backend tidak aktif.");
             }
-        };
+        });
 
-        xhr.onerror = () => {
-            btnSubmit.disabled = false;
-            btnSubmit.classList.remove('opacity-50');
-            progressContainer.classList.add('hidden');
-            alert("Koneksi ke backend terputus atau gagal.");
-        };
+        xhr.addEventListener('error', () => {
+            alert("Terjadi kesalahan jaringan saat mengunggah file.");
+        });
 
+        xhr.open('POST', `${FASTAPI_URL}/upload`, true);
         xhr.send(formData);
     };
 
-    function displayResult(rawText) {
-        resultContainer.classList.remove('hidden');
-        formattedResult.innerHTML = "";
-
-        // Pisahkan teks hasil berdasarkan pemisah utama (garis pembatas ganda)
-        const parts = rawText.split("=========================================");
+    // FUNGSI POLLING UNTUK MEMANTAU STATUS ANALISIS GEMINI
+    async function lacakStatusAnalisis(jobId) {
+        const progressBar = document.getElementById('progressBar');
+        const statusTeks = document.getElementById('statusTeks');
+        const persenTeks = document.getElementById('persenTeks');
         
-        let ayatTerakhirHTML = "";
-        let cakupanHTML = "";
-        let koreksiHTML = "";
+        progressBar.classList.add('animate-pulse');
+        
+        const intervalId = setInterval(async () => {
+            try {
+                const res = await fetch(`${FASTAPI_URL}/status/${jobId}`);
+                const data = await res.json();
+                
+                statusTeks.innerText = `Status: ${data.status}`;
+                persenTeks.innerText = "Proses AI";
 
-        // Bagian 1: Ayat Terakhir yang Dibaca
-        if (parts[0]) {
-            const cleanText = parts[0].replace("🏁 AYAT TERAKHIR YANG BACA:", "").trim();
-            const lines = cleanText.split("\n");
-            const headerInfo = lines[0] || "";
-            const arabicText = lines.slice(1).join("\n") || "";
+                if (data.status === "Selesai") {
+                    clearInterval(intervalId);
+                    progressBar.style.width = '100%';
+                    progressBar.classList.remove('animate-pulse');
+                    statusTeks.innerText = "Audit hafalan selesai!";
+                    persenTeks.innerText = "100%";
+                    tampilkanHasilEvaluasi(data.result);
+                } else if (data.status === "Error") {
+                    clearInterval(intervalId);
+                    progressBar.classList.remove('animate-pulse');
+                    statusTeks.innerText = "Gagal memproses analisis.";
+                    alert("Error pemrosesan: " + data.error);
+                }
+            } catch (err) {
+                clearInterval(intervalId);
+                progressBar.classList.remove('animate-pulse');
+                console.error("Gagal memeriksa status:", err);
+            }
+        }, 3000); // Periksa status setiap 3 detik sekali
+    }
 
-            ayatTerakhirHTML = `
-                <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-6 space-y-3">
-                    <div class="text-[10px] font-black tracking-widest text-emerald-800 uppercase">🏁 AYAT TERAKHIR YANG DIBACA</div>
-                    <div class="text-sm font-bold text-slate-700">${headerInfo}</div>
-                    <div class="font-arabic text-2xl text-emerald-950 pt-2 leading-relaxed text-right">${arabicText}</div>
-                </div>
-            `;
-        }
+    // FUNGSI MENAMPILKAN EVALUASI FORMAT ARAB & DETAIL KESALAHAN
+    function tampilkanHasilEvaluasi(teksHasil) {
+        const card = document.getElementById('hasilAudioCard');
+        const konten = document.getElementById('hasilAudioKonten');
+        card.classList.remove('hidden');
+        konten.innerHTML = "";
 
-        // Bagian 2: Cakupan Bacaan
-        if (parts[1]) {
-            const cleanText = parts[1].replace("📖 CAKUPAN BACAAN:", "").trim();
-            cakupanHTML = `
-                <div class="bg-slate-50 border border-slate-200 rounded-2xl p-6">
-                    <div class="text-[10px] font-black tracking-widest text-slate-500 uppercase mb-2">📖 CAKUPAN BACAAN</div>
-                    <p class="text-sm font-semibold text-slate-700">${cleanText}</p>
-                </div>
-            `;
-        }
+        // Bersihkan formatting teks untuk dibaca di HTML dengan rapi
+        const paragraf = teksHasil.split("\n");
+        let htmlRender = "";
 
-        // Bagian 3: Detail Koreksi
-        if (parts[2]) {
-            const cleanText = parts[2].replace("⚠️ DETAIL KOREKSI (TEKS ARAB):", "").trim();
-            
-            let itemsHTML = "";
-            if (cleanText.includes("Lancar Sempurna")) {
-                itemsHTML = `
-                    <div class="p-4 bg-emerald-100 text-emerald-800 rounded-xl font-bold text-sm text-center">
-                        🎉 Selamat, Hafalan Lancar Sempurna!
+        paragraf.forEach(line => {
+            const trimmed = line.trim();
+            if (trimmed.startsWith("🏁 AYAT TERAKHIR")) {
+                htmlRender += `<div class="bg-emerald-50 p-4 rounded-xl border border-emerald-100 mb-2 font-semibold text-emerald-900">${trimmed}</div>`;
+            } else if (trimmed.startsWith("📖 CAKUPAN BACAAN")) {
+                htmlRender += `<div class="text-xs font-bold text-slate-500 tracking-wide mt-4 uppercase">${trimmed}</div>`;
+            } else if (trimmed.startsWith("⚠️ DETAIL KOREKSI")) {
+                htmlRender += `<div class="text-xs font-bold text-red-500 tracking-wide mt-4 uppercase border-t pt-3">${trimmed}</div>`;
+            } else if (trimmed.startsWith("●")) {
+                htmlRender += `<div class="text-xs font-bold text-slate-800 mt-2 bg-slate-50 p-2 rounded-lg">${trimmed}</div>`;
+            } else if (trimmed.startsWith("Salah/Ragu:") || trimmed.startsWith("Sebenarnya:")) {
+                const bagian = trimmed.split(":");
+                const label = bagian[0];
+                const teksArab = bagian.slice(1).join(":");
+                
+                const warnaTeks = label === "Salah/Ragu" ? "text-red-600 bg-red-50/50" : "text-emerald-700 bg-emerald-50/50";
+                
+                htmlRender += `
+                    <div class="my-2 p-3 rounded-lg ${warnaTeks}">
+                        <span class="block text-[9px] font-bold uppercase tracking-wider mb-1">${label}:</span>
+                        <span class="font-arabic text-xl block text-right leading-loose">${teksArab}</span>
                     </div>
                 `;
+            } else if (trimmed.match(/[\u0600-\u06FF]/)) {
+                // Baris yang murni teks Arab (misal sisa ayat)
+                htmlRender += `<div class="font-arabic text-2xl text-slate-800 text-right leading-loose my-2">${trimmed}</div>`;
             } else {
-                // Parse setiap baris koreksi yang diawali tanda bulat (●)
-                const items = cleanText.split("●");
-                items.forEach(item => {
-                    if (item.trim() === "") return;
-                    
-                    const lines = item.trim().split("\n");
-                    const metaInfo = lines[0] || ""; // Contoh: Al-Mulk Ayat 5 (Menit 01:23)
-                    
-                    let detailBody = "";
-                    lines.slice(1).forEach(line => {
-                        detailBody += `<p class="text-xs text-slate-600 my-1">${line}</p>`;
-                    });
+                if(trimmed !== "") {
+                    htmlRender += `<p class="text-slate-600 mb-1">${trimmed}</p>`;
+                }
+            }
+        });
 
-                    itemsHTML += `
-                        <div class="border-l-4 border-amber-500 bg-amber-50/50 p-4 rounded-r-xl space-y-2">
-                            <div class="text-xs font-extrabold text-amber-800">${metaInfo}</div>
-                            <div class="space-y-1">${detailBody}</div>
-                        </div>
-                    `;
+        konten.innerHTML = htmlRender;
+        // Scroll halaman otomatis ke bagian hasil audio agar user langsung tahu
+        card.scrollIntoView({ behavior: 'smooth' });
+    }
+ 
+    document.getElementById('btnGenerate').onclick = async () => {
+        const info = document.getElementById('infoTeks').value;
+        const materi = document.getElementById('catatanTambahan').value;
+        if (!info || !materi) return alert("Harap isi Nama/Judul dan Materi terlebih dahulu!");
+ 
+        setLoading(true, "AI SEDANG MERANCANG DESAIN PREMIUM...");
+        const format = document.getElementById('formatBrosur').value;
+        const bahasa = document.getElementById('opsiBahasa').value;
+ 
+        try {
+            const res = await fetch(BACKEND_URL, {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: 'generate',
+                    infoTeks: info,
+                    catatanTambahan: materi,
+                    formatBrosur: format,
+                    opsiBahasa: bahasa,
+                    jumlahGambar: document.getElementById('jumlahGambar').value,
+                    modelBrosur: document.getElementById('modelBrosur').value,
+                    listFotoBase64: listFotoBase64
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                currentHtml = data.html;
+                renderCarouselPreview(data.html, format);
+                document.getElementById('btnDownload').classList.remove('hidden');
+                document.getElementById('saveArea').classList.remove('hidden');
+            } else {
+                alert("Gagal memproses data: " + data.error);
+            }
+        } catch (e) {
+            alert("Terjadi Error pada Web App.");
+        }
+        setLoading(false);
+    };
+
+    function renderCarouselPreview(htmlString, formatClass) {
+        const outer = document.getElementById('canvasOuter');
+        outer.innerHTML = ""; 
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = htmlString;
+        const slides = tempDiv.querySelectorAll('.instagram-slide');
+        
+        slides.forEach((slideHtml) => {
+            const slideContainer = document.createElement('div');
+            slideContainer.className = "slide-container";
+            const ratioWrapper = document.createElement('div');
+            ratioWrapper.className = formatClass;
+            ratioWrapper.appendChild(slideHtml);
+            slideContainer.appendChild(ratioWrapper);
+            outer.appendChild(slideContainer);
+        });
+    }
+ 
+    document.getElementById('btnDownload').onclick = async function() {
+        const slides = document.querySelectorAll('#canvasOuter .instagram-slide');
+        if(slides.length === 0) return;
+        
+        setLoading(true, "MENSINKRONISASI & GENERATING PNG...");
+        const hiddenArea = document.getElementById('hiddenRenderArea');
+
+        for (let i = 0; i < slides.length; i++) {
+            const originalSlide = slides[i];
+            const clonedSlide = originalSlide.cloneNode(true);
+            hiddenArea.appendChild(clonedSlide);
+            
+            await new Promise(r => setTimeout(r, 200));
+
+            const canvas = await html2canvas(clonedSlide, { 
+                scale: 2, 
+                useCORS: true, 
+                logging: false,
+                backgroundColor: null,
+                width: clonedSlide.offsetWidth,
+                height: clonedSlide.offsetHeight
+            });
+
+            hiddenArea.removeChild(clonedSlide);
+
+            const link = document.createElement('a');
+            link.download = `Slide-${i+1}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+            await new Promise(r => setTimeout(r, 300));
+        }
+        setLoading(false);
+    };
+ 
+    document.getElementById('btnSave').onclick = async () => {
+        setLoading(true, "MENYIMPAN KE CLOUD...");
+        const res = await fetch(BACKEND_URL, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'save', html: currentHtml, infoTeks: document.getElementById('infoTeks').value })
+        });
+        const data = await res.json();
+        if (data.success) {
+            document.getElementById('resultId').classList.remove('hidden');
+            document.getElementById('displayId').innerText = data.projectId;
+            await fetchProjectList();
+        }
+        setLoading(false);
+    };
+ 
+    document.getElementById('btnLoad').onclick = async () => {
+        const id = document.getElementById('loadId').value;
+        if(!id) return alert("Silakan pilih project dari dropdown terlebih dahulu!");
+        
+        setLoading(true, "MEMUAT DATA...");
+        const res = await fetch(BACKEND_URL, { method: 'POST', body: JSON.stringify({ action: 'load', projectId: id }) });
+        const data = await res.json();
+        if (data.success) {
+            currentHtml = data.html;
+            const format = document.getElementById('formatBrosur').value;
+            renderCarouselPreview(data.html, format);
+            document.getElementById('btnDownload').classList.remove('hidden');
+        } else {
+            alert("ID Tidak Ditemukan.");
+        }
+        setLoading(false);
+    };
+
+    async function fetchProjectList() {
+        try {
+            const res = await fetch(BACKEND_URL, { method: 'POST', body: JSON.stringify({ action: 'get_projects' }) });
+            const data = await res.json();
+            if (data.success && data.projects) {
+                const selectElement = document.getElementById('loadId');
+                selectElement.innerHTML = '<option value="">Pilih Project...</option>';
+                
+                data.projects.forEach(proj => {
+                    let opt = document.createElement('option');
+                    opt.value = proj.id;
+                    opt.innerHTML = `[${proj.id}] ${proj.title}`;
+                    selectElement.appendChild(opt);
                 });
             }
-
-            koreksiHTML = `
-                <div class="space-y-3">
-                    <div class="text-[10px] font-black tracking-widest text-red-600 uppercase">⚠️ DETAIL KOREKSI (TEKS ARAB)</div>
-                    <div class="space-y-3">${itemsHTML}</div>
-                </div>
-            `;
+        } catch(e) {
+            console.log("Gagal memuat daftar project:", e);
         }
-
-        formattedResult.innerHTML = ayatTerakhirHTML + cakupanHTML + koreksiHTML;
     }
-</script>
+ 
+    function setLoading(s, t) { 
+        document.getElementById('loading').classList.toggle('hidden', !s); 
+        document.getElementById('loadingText').innerText = t; 
+    }
 
+    window.onload = () => {
+        fetchProjectList();
+    };
+</script>
 </body>
 </html>
