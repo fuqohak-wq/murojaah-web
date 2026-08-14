@@ -284,7 +284,7 @@
         progressContainer.classList.add('hidden');
     }
 
-    // PARSER LOG KOREKSI KE ELEMEN HTML (REVISI SANGAT TANGGUH & ANTI-GAGAL)
+    // PARSER LOG KOREKSI KE ELEMEN HTML (TAMPILAN KANAN-KIRI ABSOLUT DI HP/TABLET)
     function parseKoreksiKeHTML(teksMentah) {
         const lines = teksMentah.split('\n').map(l => l.trim());
         
@@ -293,7 +293,7 @@
         let cakupanBacaanList = [];
         let detailKoreksiHTML = "";
         
-        // 1. Ambil Ayat Terakhir (Pencarian fleksibel berbasis kata kunci utama)
+        // 1. Ambil Ayat Terakhir
         for (let i = 0; i < lines.length; i++) {
             if (lines[i].includes("🏁") && lines[i].toLowerCase().includes("ayat terakhir")) {
                 const colonIdx = lines[i].indexOf(":");
@@ -303,7 +303,6 @@
                     teksAyatTerakhir = lines[i].replace(/🏁\s*AYAT\s*TERAKHIR[^\n]*/i, "").trim();
                 }
                 
-                // Cari baris lafaz arab di bawahnya
                 let j = i + 1;
                 while (j < lines.length) {
                     if (lines[j] && !lines[j].startsWith("==") && !lines[j].includes("📖") && !lines[j].includes("⚠️")) {
@@ -334,17 +333,15 @@
             }
         }
         
-        // 3. Ambil Detail Koreksi (Pencarian berbasis Bullet Point ● dan pembatas '---')
+        // 3. Ambil Detail Koreksi (Side-by-side Layout & Dukungan Teks Arab Kiri)
         let currentHeader = "";
         for (let i = 0; i < lines.length; i++) {
             let line = lines[i];
             if (line.startsWith("●")) {
-                currentHeader = line.substring(1).trim(); // Hapus tanda bullet
+                currentHeader = line.substring(1).trim(); 
                 
-                // Cari baris bermuatan "---" di bawah bullet ini
                 let j = i + 1;
                 while (j < lines.length) {
-                    // Jika menabrak bullet baru atau tajuk baru sebelum menemukan '---', batalkan pencarian baris ini
                     if (lines[j].startsWith("●") || lines[j].startsWith("==") || lines[j].includes("🏁") || lines[j].includes("📖")) {
                         break;
                     }
@@ -355,26 +352,28 @@
                             const benar = bagian[1].trim();
                             
                             detailKoreksiHTML += `
-                                <div class="mt-8 border-t border-gray-100 pt-6 first:mt-0 first:border-0 first:pt-0">
-                                    <span class="inline-block text-xs font-bold text-emerald-800 bg-emerald-50 px-3 py-1 rounded-full mb-4">
+                                <div class="mt-6 border-t border-gray-100 pt-5 first:mt-0 first:border-0 first:pt-0">
+                                    <span class="inline-block text-[10px] md:text-xs font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full mb-3">
                                         📌 ${currentHeader || "Koreksi Bacaan"}
                                     </span>
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-2">
-                                        <!-- Kolom Salah / Ragu -->
-                                        <div class="bg-rose-50/40 border border-rose-100 p-5 rounded-2xl flex flex-col justify-between">
-                                            <span class="text-[10px] font-bold text-rose-500 uppercase tracking-widest block mb-3">❌ Lafaz Salah / Ragu (Potongan)</span>
-                                            <p class="arabic-text text-3xl text-right text-gray-700 leading-loose select-all">${salah}</p>
+                                    <!-- Grid disetel kolom-2 secara absolut pada semua ukuran layar (HP/Tablet/Laptop) -->
+                                    <div class="grid grid-cols-2 gap-3 sm:gap-4 mt-1">
+                                        <!-- Kolom Salah / Ragu (Kiri) -->
+                                        <div class="bg-rose-50/40 border border-rose-100 p-2.5 sm:p-4 rounded-xl flex flex-col justify-between">
+                                            <span class="text-[7px] sm:text-[9px] md:text-[10px] font-bold text-rose-500 uppercase tracking-wider block mb-2">❌ Salah/Ragu (Potongan)</span>
+                                            <!-- Menggunakan font arab karena output berupa aksara arab -->
+                                            <p class="arabic-text text-base sm:text-xl md:text-2xl text-right text-gray-700 leading-relaxed select-all">${salah}</p>
                                         </div>
-                                        <!-- Kolom Seharusnya -->
-                                        <div class="bg-emerald-50/40 border border-emerald-100 p-5 rounded-2xl flex flex-col justify-between">
-                                            <span class="text-[10px] font-bold text-emerald-600 uppercase tracking-widest block mb-3">✅ Seharusnya - Mushaf (Satu Ayat Utuh)</span>
-                                            <p class="arabic-text text-3xl text-right text-emerald-900 leading-loose font-medium select-all">${benar}</p>
+                                        <!-- Kolom Seharusnya (Kanan) -->
+                                        <div class="bg-emerald-50/40 border border-emerald-100 p-2.5 sm:p-4 rounded-xl flex flex-col justify-between">
+                                            <span class="text-[7px] sm:text-[9px] md:text-[10px] font-bold text-emerald-600 uppercase tracking-wider block mb-2">✅ Seharusnya (Satu Ayat Utuh)</span>
+                                            <p class="arabic-text text-base sm:text-xl md:text-2xl text-right text-emerald-900 leading-relaxed font-medium select-all">${benar}</p>
                                         </div>
                                     </div>
                                 </div>
                             `;
                         }
-                        break; // Hentikan pencarian '---' setelah ketemu pasangan barisnya
+                        break; 
                     }
                     j++;
                 }
@@ -388,7 +387,7 @@
                 <div class="bg-gradient-to-br from-amber-50 to-amber-100/40 border border-amber-200 p-6 rounded-2xl shadow-sm text-center">
                     <span class="text-[11px] font-bold text-amber-800 uppercase tracking-widest block mb-2">🏁 Ayat Terakhir Yang Dibaca</span>
                     <h3 class="text-md font-bold text-amber-950 mb-4">${teksAyatTerakhir}</h3>
-                    ${lafazAyatTerakhir ? `<p class="arabic-text text-4xl text-center text-amber-900 leading-loose select-all">${lafazAyatTerakhir}</p>` : ""}
+                    ${lafazAyatTerakhir ? `<p class="arabic-text text-3xl sm:text-4xl text-center text-amber-900 leading-loose select-all">${lafazAyatTerakhir}</p>` : ""}
                 </div>
             `;
         }
@@ -407,7 +406,7 @@
             outputHTML += `
                 <div class="space-y-4">
                     <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider">⚠️ Daftar Koreksi & Keraguan Detail:</h4>
-                    <div class="bg-white border border-gray-100 p-6 rounded-2xl shadow-sm space-y-4">
+                    <div class="bg-white border border-gray-100 p-4 sm:p-6 rounded-2xl shadow-sm space-y-4">
                         ${detailKoreksiHTML}
                     </div>
                 </div>
@@ -765,7 +764,6 @@
                 const tanggal = new Date(item.waktu).toLocaleDateString('id-ID', {day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit'});
                 
                 let ayatTerakhirSesi = "Murojaah Selesai";
-                // Menggunakan regex fleksibel pencari kata kunci Ayat Terakhir
                 const matchAyat = item.koreksi.match(/🏁\s*AYAT\s*TERAKHIR[^\n:]*:\s*(.*)/i);
                 if (matchAyat && matchAyat[1]) {
                     ayatTerakhirSesi = matchAyat[1].trim();
