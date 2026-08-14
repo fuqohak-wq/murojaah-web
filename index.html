@@ -70,7 +70,7 @@
             <!-- INDIKATOR PROGRESS BAR PENGIRIMAN -->
             <div id="progressContainer" class="hidden space-y-1.5 mt-4">
                 <div class="flex justify-between text-xs font-bold text-emerald-700">
-                    <span>⏳ Mengirim berkas audio ke server (Mengunggah Cepat Paralel)...</span>
+                    <span>⏳ Mengirim berkas audio ke server (Mengunggah Bertahap)...</span>
                     <span id="progressPercent">0%</span>
                 </div>
                 <div class="w-full bg-gray-200 h-3 rounded-full overflow-hidden border">
@@ -640,157 +640,80 @@
         timerLabel.textContent = `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     }
 
-    // SISTEM UNGGAL PARALEL CEPAT (OPTIMALISASI UNTUK AUDIO BERDURASI PANJANG)
+    // SISTEM KIRIM BERTINGKAT (CHUNKED UPLOAD) - UNTUK MENCEGAH TIMEOUT FILE BESAR (JUZ AN / JAM AN)
     async function kirimBlobAudio(blob) {
-        // Tentukan ukuran potongan dinamis: Jika berkas raksasa, gunakan potongan lebih besar (mengurangi waktu jeda request)
-        let CHUNK_SIZE = 3 * 1024 * 1024; // Default: 3 MB per potongan
-        if (blob.size > 150 * 1024 * 1024) {
-            CHUNK_SIZE = 10 * 1024 * 1024; // 10 MB per potongan jika file > 150MB
-        } else if (blob.size > 50 * 1024 * 1024) {
-            CHUNK_SIZE = 5 * 1024 * 1024; // 5 MB per potongan jika file > 50MB
-        }
-        
+        const CHUNK_SIZE = 1.5 * 1024 * 1024; // Bagian potong: 1.5 MB per paket agar lancar di jaringan mobile
         const totalSize = blob.size;
         const totalChunks = Math.ceil(totalSize / CHUNK_SIZE);
+        
         const randomId = Math.random().toString(36).substring(2, 15) + "_" + Date.now();
         const ext = blob.type.includes('mp4') ? 'mp4' : (blob.type.includes('webm') ? 'webm' : 'mp3');
         const filename = `${randomId}.${ext}`;
-        const surahHint = surahHintInput ? surahHintInput.value.trim() : "";
         
         updateUploadProgress(0);
-        tampilkanStatus(`📦 Mempersiapkan & mengunggah berkas (${(totalSize / (1024*1024)).toFixed(2)} MB) dalam ${totalChunks} bagian...`, "bg-blue-50 border-blue-200 text-blue-700");
+        tampilkanStatus(`📦 Mempersiapkan berkas audio besar Anda (${(totalSize / (1024*1024)).toFixed(2)} MB)...`, "bg-blue-50 border-blue-200 text-blue-700");
 
-        const MAX_CONCURRENCY = 3; // Mengirim maksimal 3 potongan sekaligus secara bersamaan untuk mempercepat upload
-        let currentChunkIndex = 0;
-        let completedChunks = 0;
-        let activeUploads = 0;
-        let hasFailed = false;
+        for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
+            const start = chunkIndex * CHUNK_SIZE;
+            const end = Math.min(start + CHUNK_SIZE, totalSize);
+            const chunkBlob = blob.slice(start, end);
+            
+            let sukses = false;
+            let percobaan = 3; // Retry otomatis jika putus di tengah jalan
 
-        return new Promise((resolve, reject) => {
-            async function worker() {
-                if (hasFailed) return;
-                
-                while (currentChunkIndex < totalChunks && activeUploads < MAX_CONCURRENCY && !hasFailed) {
-                    const indexToUpload = currentChunkIndex;
-                    currentChunkIndex++;
-                    activeUploads++;
-
-                    const start = indexToUpload * CHUNK_SIZE;
-                    const end = Math.min(start + CHUNK_SIZE, totalSize);
-                    const chunkBlob = blob.slice(start, end);
-
-                    uploadWithRetry(chunkBlob, filename, indexToUpload, ext, 3)
-                        .then(() => {
-                            activeUploads--;
-                            completedChunks++;
-                            const percent = Math.round((completedChunks / totalChunks) * 100);
-                            updateUploadProgress(percent);
-                            
-                            if (completedChunks === totalChunks) {
-                                // Semua potongan sukses terunggah! Perintahkan server untuk menggabungkan file
-                                tampilkanStatus("🔄 Menyusun dan menggabungkan berkas di server...", "bg-blue-50 border-blue-200 text-blue-700");
-                                kirimRequestMerge(filename, totalChunks, surahHint)
-                                    .then((res) => {
-                                        hideUploadProgress();
-                                        tampilkanStatus(`🎉 <strong>Rekaman Berhasil Terkirim!</strong> Google Gemini AI sedang menyimak hafalan Anda secara utuh. Laporan koreksi otomatis muncul di tabel bawah sesaat lagi.`, "bg-green-50 border-green-200 text-green-700");
-                                        resolve(res);
-                                    })
-                                    .catch((err) => {
-                                        hasFailed = true;
-                                        hideUploadProgress();
-                                        tampilkanStatus(`❌ <strong>Gagal Menggabungkan Berkas:</strong> ${err.message}`, "bg-red-50 border-red-200 text-red-700");
-                                        reject(err);
-                                    });
-                            } else {
-                                worker(); // Picu pengiriman potongan berikutnya
-                            }
-                        })
-                        .catch((err) => {
-                            hasFailed = true;
-                            hideUploadProgress();
-                            tampilkanStatus(`❌ <strong>Kesalahan Koneksi:</strong> Gagal mengirim potongan ke-${indexToUpload + 1}. Koneksi terganggu. Silakan klik 'Kirim Ulang'.`, "bg-red-50 border-red-200 text-red-700");
-                            reject(err);
-                        });
+            while (!sukses && percobaan > 0) {
+                try {
+                    await kirimSatuChunk(chunkBlob, filename, chunkIndex, totalChunks, ext, surahHintInput ? surahHintInput.value.trim() : "");
+                    sukses = true;
+                    
+                    const percentComplete = Math.round(((chunkIndex + 1) / totalChunks) * 100);
+                    updateUploadProgress(percentComplete);
+                } catch (err) {
+                    percobaan--;
+                    if (percobaan === 0) {
+                        hideUploadProgress();
+                        tampilkanStatus(`❌ <strong>Kesalahan Koneksi:</strong> Gagal mengirim potongan ke-${chunkIndex + 1}. Koneksi terganggu. Berkas aman di memori HP, silakan klik 'Kirim Ulang'.`, "bg-red-50 border-red-200 text-red-700");
+                        throw err;
+                    }
+                    // Tunggu 2 detik sebelum mencoba lagi
+                    await new Promise(resolve => setTimeout(resolve, 2000));
                 }
             }
-
-            // Jalankan worker awal secara paralel
-            for (let i = 0; i < Math.min(MAX_CONCURRENCY, totalChunks); i++) {
-                worker();
-            }
-        });
-    }
-
-    async function uploadWithRetry(chunkBlob, filename, chunkIndex, ext, retries = 3) {
-        for (let i = 0; i < retries; i++) {
-            try {
-                await kirimSatuChunk(chunkBlob, filename, chunkIndex, ext);
-                return;
-            } catch (err) {
-                if (i === retries - 1) throw err;
-                await new Promise(resolve => setTimeout(resolve, 2000)); // Jeda 2 detik sebelum kirim ulang
-            }
         }
+        
+        hideUploadProgress();
+        tampilkanStatus(`🎉 <strong>Rekaman Berhasil Terkirim!</strong> Google Gemini AI sedang menyimak hafalan Anda secara utuh. Laporan koreksi otomatis muncul di tabel bawah sesaat lagi.`, "bg-green-50 border-green-200 text-green-700");
     }
 
-    function kirimSatuChunk(chunkBlob, filename, chunkIndex, ext) {
+    function kirimSatuChunk(chunkBlob, filename, chunkIndex, totalChunks, ext, surahHint) {
         return new Promise((resolve, reject) => {
             const formData = new FormData();
             formData.append('file', chunkBlob, `part_${chunkIndex}.${ext}`);
             formData.append('filename', filename);
             formData.append('chunk_index', chunkIndex);
+            formData.append('total_chunks', totalChunks);
+            if (surahHint) {
+                formData.append('surah_hint', surahHint);
+            }
             
             const xhr = new XMLHttpRequest();
             xhr.open('POST', BACKEND_URL, true);
             
             xhr.onload = () => {
                 if (xhr.status >= 200 && xhr.status < 300) {
-                    resolve();
-                } else {
-                    reject(new Error(`Server error: ${xhr.status}`));
-                }
-            };
-            
-            xhr.onerror = () => {
-                reject(new Error("Gagal terhubung ke jaringan saat mengirim bagian file."));
-            };
-            
-            xhr.send(formData);
-        });
-    }
-
-    function kirimRequestMerge(filename, totalChunks, surahHint) {
-        return new Promise((resolve, reject) => {
-            // Mengarahkan url upload ke endpoint merge secara otomatis
-            const mergeUrl = BACKEND_URL.replace("/upload", "/merge");
-            const formData = new FormData();
-            formData.append('filename', filename);
-            formData.append('total_chunks', totalChunks);
-            if (surahHint) {
-                formData.append('surah_hint', surahHint);
-            }
-
-            const xhr = new XMLHttpRequest();
-            xhr.open('POST', mergeUrl, true);
-            xhr.onload = () => {
-                if (xhr.status >= 200 && xhr.status < 300) {
                     try {
                         const data = JSON.parse(xhr.responseText);
-                        if (data.status === "success") {
-                            resolve(data);
-                        } else {
-                            reject(new Error(data.message || "Gagal menyatukan file di server."));
-                        }
+                        resolve(data);
                     } catch (e) {
-                        reject(new Error("Respon server tidak valid."));
+                        reject(new Error("Gagal membaca respon server."));
                     }
                 } else {
-                    reject(new Error(`Merge error: ${xhr.status}`));
+                    reject(new Error(`Server merespon dengan status ${xhr.status}`));
                 }
             };
             
             xhr.onerror = () => {
-                reject(new Error("Gagal terhubung ke jaringan saat meminta penggabungan file."));
+                reject(new Error("Terjadi kesalahan jaringan saat mengunggah bagian berkas."));
             };
             
             xhr.send(formData);
