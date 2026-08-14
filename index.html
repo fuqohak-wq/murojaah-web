@@ -18,6 +18,9 @@
             direction: rtl;
             font-weight: 400;
         }
+        #fullscreenModal {
+            -webkit-overflow-scrolling: touch;
+        }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 antialiased">
@@ -143,7 +146,7 @@
     </main>
 
     <!-- MODAL VIEWER LAYAR PENUH -->
-    <div id="fullscreenModal" class="hidden fixed inset-0 z-50 bg-white overflow-y-auto">
+    <div id="fullscreenModal" class="hidden fixed inset-0 z-50 bg-white overflow-y-auto h-screen w-screen">
         <!-- Header Sticky -->
         <div class="sticky top-0 bg-white/95 backdrop-blur-md border-b border-gray-100 py-4 px-6 flex justify-between items-center z-10 shadow-sm">
             <div class="flex items-center gap-3">
@@ -160,7 +163,7 @@
         
         <!-- Area Isi Laporan -->
         <div class="max-w-4xl mx-auto px-6 py-8">
-            <div id="modalBody" class="space-y-8"></div>
+            <div id="modalBody" class="space-y-8 pb-16"></div>
         </div>
     </div>
 
@@ -281,98 +284,99 @@
         progressContainer.classList.add('hidden');
     }
 
-    // PARSER LOG KOREKSI KE ELEMEN HTML
+    // PARSER LOG KOREKSI KE ELEMEN HTML (REVISI SANGAT TANGGUH & ANTI-GAGAL)
     function parseKoreksiKeHTML(teksMentah) {
-        const baris = teksMentah.split('\n');
+        const lines = teksMentah.split('\n').map(l => l.trim());
         
         let teksAyatTerakhir = "";
         let lafazAyatTerakhir = "";
         let cakupanBacaanList = [];
         let detailKoreksiHTML = "";
         
-        let currentHeader = "";
-        let inCakupan = false;
-        let inDetail = false;
-        
-        for (let i = 0; i < baris.length; i++) {
-            let line = baris[i].trim();
-            if (!line) continue;
-            
-            if (line.startsWith("===")) {
-                inCakupan = false;
-                continue;
-            }
-            
-            if (line.includes("🏁 AYAT TERAKHIR YANG DIBACA:")) {
-                teksAyatTerakhir = line.replace("🏁 AYAT TERAKHIR YANG DIBACA:", "").trim();
+        // 1. Ambil Ayat Terakhir (Pencarian fleksibel berbasis kata kunci utama)
+        for (let i = 0; i < lines.length; i++) {
+            if (lines[i].includes("🏁") && lines[i].toLowerCase().includes("ayat terakhir")) {
+                const colonIdx = lines[i].indexOf(":");
+                if (colonIdx !== -1) {
+                    teksAyatTerakhir = lines[i].substring(colonIdx + 1).trim();
+                } else {
+                    teksAyatTerakhir = lines[i].replace(/🏁\s*AYAT\s*TERAKHIR[^\n]*/i, "").trim();
+                }
+                
+                // Cari baris lafaz arab di bawahnya
                 let j = i + 1;
-                while (j < baris.length) {
-                    let nextLine = baris[j].trim();
-                    if (nextLine && !nextLine.startsWith("===") && !nextLine.includes("📖") && !nextLine.includes("⚠️")) {
-                        lafazAyatTerakhir = nextLine;
-                        i = j; 
+                while (j < lines.length) {
+                    if (lines[j] && !lines[j].startsWith("==") && !lines[j].includes("📖") && !lines[j].includes("⚠️")) {
+                        lafazAyatTerakhir = lines[j];
                         break;
                     }
                     j++;
                 }
-                continue;
+                break;
             }
-            
-            if (line.includes("📖 CAKUPAN BACAAN:")) {
-                inCakupan = true;
-                continue;
-            }
-            
-            if (inCakupan) {
-                if (line.includes("⚠️") || line.startsWith("●")) {
-                    inCakupan = false;
-                } else {
-                    cakupanBacaanList.push(line);
-                    continue;
+        }
+        
+        // 2. Ambil Cakupan Bacaan
+        for (let i = 0; i < lines.length; i++) {
+            if (lines[i].includes("📖") && lines[i].toLowerCase().includes("cakupan")) {
+                let j = i + 1;
+                while (j < lines.length) {
+                    let nextLine = lines[j];
+                    if (nextLine.startsWith("==") || nextLine.includes("⚠️") || nextLine.startsWith("●")) {
+                        break;
+                    }
+                    if (nextLine) {
+                        cakupanBacaanList.push(nextLine);
+                    }
+                    j++;
                 }
+                break;
             }
-            
-            if (line.includes("⚠️ DETAIL KOREKSI")) {
-                inDetail = true;
-                inCakupan = false;
-                continue;
-            }
-            
-            if (inDetail) {
-                if (line.startsWith("●")) {
-                    currentHeader = line.replace("●", "").trim();
-                } else if (line.includes("---")) {
-                    const bagian = line.split("---");
-                    if (bagian.length === 2) {
-                        const salah = bagian[0].trim();
-                        const benar = bagian[1].trim();
-                        
-                        detailKoreksiHTML += `
-                            <div class="mt-8 border-t border-gray-100 pt-6 first:mt-0 first:border-0 first:pt-0">
-                                <span class="inline-block text-xs font-bold text-emerald-800 bg-emerald-50 px-3 py-1 rounded-full mb-4">
-                                    📌 ${currentHeader || "Koreksi Bacaan"}
-                                </span>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-2">
-                                    <!-- Kolom Salah / Ragu -->
-                                    <div class="bg-rose-50/40 border border-rose-100 p-5 rounded-2xl flex flex-col justify-between">
-                                        <span class="text-[10px] font-bold text-rose-500 uppercase tracking-widest block mb-3">❌ Lafaz Salah / Ragu (Potongan)</span>
-                                        <p class="arabic-text text-3xl text-right text-gray-700 leading-loose select-all">${salah}</p>
-                                    </div>
-                                    <!-- Kolom Seharusnya -->
-                                    <div class="bg-emerald-50/40 border border-emerald-100 p-5 rounded-2xl flex flex-col justify-between">
-                                        <span class="text-[10px] font-bold text-emerald-600 uppercase tracking-widest block mb-3">✅ Seharusnya - Mushaf (Satu Ayat Utuh)</span>
-                                        <p class="arabic-text text-3xl text-right text-emerald-900 leading-loose font-medium select-all">${benar}</p>
+        }
+        
+        // 3. Ambil Detail Koreksi (Pencarian berbasis Bullet Point ● dan pembatas '---')
+        let currentHeader = "";
+        for (let i = 0; i < lines.length; i++) {
+            let line = lines[i];
+            if (line.startsWith("●")) {
+                currentHeader = line.substring(1).trim(); // Hapus tanda bullet
+                
+                // Cari baris bermuatan "---" di bawah bullet ini
+                let j = i + 1;
+                while (j < lines.length) {
+                    // Jika menabrak bullet baru atau tajuk baru sebelum menemukan '---', batalkan pencarian baris ini
+                    if (lines[j].startsWith("●") || lines[j].startsWith("==") || lines[j].includes("🏁") || lines[j].includes("📖")) {
+                        break;
+                    }
+                    if (lines[j].includes("---")) {
+                        const bagian = lines[j].split("---");
+                        if (bagian.length === 2) {
+                            const salah = bagian[0].trim();
+                            const benar = bagian[1].trim();
+                            
+                            detailKoreksiHTML += `
+                                <div class="mt-8 border-t border-gray-100 pt-6 first:mt-0 first:border-0 first:pt-0">
+                                    <span class="inline-block text-xs font-bold text-emerald-800 bg-emerald-50 px-3 py-1 rounded-full mb-4">
+                                        📌 ${currentHeader || "Koreksi Bacaan"}
+                                    </span>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-2">
+                                        <!-- Kolom Salah / Ragu -->
+                                        <div class="bg-rose-50/40 border border-rose-100 p-5 rounded-2xl flex flex-col justify-between">
+                                            <span class="text-[10px] font-bold text-rose-500 uppercase tracking-widest block mb-3">❌ Lafaz Salah / Ragu (Potongan)</span>
+                                            <p class="arabic-text text-3xl text-right text-gray-700 leading-loose select-all">${salah}</p>
+                                        </div>
+                                        <!-- Kolom Seharusnya -->
+                                        <div class="bg-emerald-50/40 border border-emerald-100 p-5 rounded-2xl flex flex-col justify-between">
+                                            <span class="text-[10px] font-bold text-emerald-600 uppercase tracking-widest block mb-3">✅ Seharusnya - Mushaf (Satu Ayat Utuh)</span>
+                                            <p class="arabic-text text-3xl text-right text-emerald-900 leading-loose font-medium select-all">${benar}</p>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        `;
+                            `;
+                        }
+                        break; // Hentikan pencarian '---' setelah ketemu pasangan barisnya
                     }
-                } else if (line.toLowerCase().includes("lancar sempurna")) {
-                    detailKoreksiHTML += `
-                        <div class="bg-emerald-50 border border-emerald-100 text-emerald-800 p-6 rounded-2xl text-center font-semibold">
-                            ✨ Lancar Sempurna (Tidak ada kesalahan atau keraguan).
-                        </div>
-                    `;
+                    j++;
                 }
             }
         }
@@ -502,7 +506,6 @@
                 audioPlaybackBox.classList.add('hidden');
                 audioPlayer.src = "";
                 
-                // MENGGUNAKAN KOMPRESI SANGAT RENDAH (24kbps) UNTUK AUDIO BERMUTU TINGGI TAPI FILE KECIL
                 let options = { 
                     mimeType: 'audio/webm;codecs=opus',
                     audioBitsPerSecond: 24000
@@ -762,13 +765,14 @@
                 const tanggal = new Date(item.waktu).toLocaleDateString('id-ID', {day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit'});
                 
                 let ayatTerakhirSesi = "Murojaah Selesai";
-                const matchAyat = item.koreksi.match(/🏁 AYAT TERAKHIR YANG DIBACA:\s*(.*)/);
+                // Menggunakan regex fleksibel pencari kata kunci Ayat Terakhir
+                const matchAyat = item.koreksi.match(/🏁\s*AYAT\s*TERAKHIR[^\n:]*:\s*(.*)/i);
                 if (matchAyat && matchAyat[1]) {
                     ayatTerakhirSesi = matchAyat[1].trim();
                 }
 
                 let cakupanSesi = "Detail Bacaan";
-                const matchCakupan = item.koreksi.match(/📖 CAKUPAN BACAAN:\s*(.*)/);
+                const matchCakupan = item.koreksi.match(/📖\s*CAKUPAN\s*BACAAN[^\n:]*:\s*(.*)/i);
                 if (matchCakupan && matchCakupan[1]) {
                     cakupanSesi = matchCakupan[1].trim();
                 }
